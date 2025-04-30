@@ -874,6 +874,20 @@ int main(void)
 	nus_cmd_init(on_nus_connect, on_nus_disconnect, commands);
 #endif /* CONFIG_BT_NUS */
 
+    do {
+        extern void debug_get_eui64(uint8_t *p_mac, uint8_t ficr_info_skip);
+        union {
+            uint8_t  id_bytes[8];
+            uint64_t id_num;
+        } static uid64_dbg;
+        
+        debug_get_eui64(uid64_dbg.id_bytes, 0);
+        LOG_INF("FICR.INFO.UID64 : %llx", uid64_dbg.id_num); 
+        
+        debug_get_eui64(uid64_dbg.id_bytes, 1);
+        LOG_INF("FICR.UID64      : %llx", uid64_dbg.id_num);
+    } while (0);
+
 	LOG_INF("Zigbee R23 Light Switch example started");
 
 	while (1) {
