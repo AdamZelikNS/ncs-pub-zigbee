@@ -495,6 +495,9 @@ void zigbee_fota_signal_handler(zb_bufid_t bufid)
 
 void zigbee_fota_zcl_cb(zb_bufid_t bufid)
 {
+    zb_zcl_ota_upgrade_value_param_t upgr_param_cpy;
+    zb_zcl_ota_upgrade_value_param_t * const ota_upgrade_value =
+		&upgr_param_cpy;
 	zb_zcl_device_callback_param_t *device_cb_param =
 		ZB_BUF_GET_PARAM(bufid, zb_zcl_device_callback_param_t);
 
@@ -503,8 +506,7 @@ void zigbee_fota_zcl_cb(zb_bufid_t bufid)
 	}
 
 	device_cb_param->status = RET_OK;
-	zb_zcl_ota_upgrade_value_param_t *ota_upgrade_value =
-		&(device_cb_param->cb_param.ota_value_param);
+    upgr_param_cpy = (device_cb_param->cb_param.ota_value_param);
 
 	switch (ota_upgrade_value->upgrade_status) {
 	case ZB_ZCL_OTA_UPGRADE_STATUS_START:
@@ -601,6 +603,8 @@ void zigbee_fota_zcl_cb(zb_bufid_t bufid)
 		device_cb_param->status = RET_NOT_IMPLEMENTED;
 		break;
 	}
+
+    device_cb_param->cb_param.ota_value_param = upgr_param_cpy;
 
 	/* No need to free the buffer - stack handles that if needed. */
 	return;
