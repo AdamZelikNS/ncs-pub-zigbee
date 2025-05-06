@@ -5,6 +5,8 @@ tests:
   sample.zigbee.ncp:
     sysbuild: true
     build_only: true
+    extra_args:
+      - CONFIG_ZIGBEE_FACTORY_RESET=n
     integration_platforms:
       - nrf54l15dk/nrf54l15/cpuapp
       - nrf54l15dk/nrf54l10/cpuapp
@@ -33,6 +35,7 @@ tests:
       - sysbuild
       - ci_samples_zigbee
     extra_args:
+      - CONFIG_ZIGBEE_FACTORY_RESET=n
       - FILE_SUFFIX=usb
   sample.zigbee.ncp.dongle:
     sysbuild: true
@@ -47,4 +50,5 @@ tests:
       - sysbuild
       - ci_samples_zigbee
     extra_args:
+      - CONFIG_ZIGBEE_FACTORY_RESET=n
       - FILE_SUFFIX=dongle
