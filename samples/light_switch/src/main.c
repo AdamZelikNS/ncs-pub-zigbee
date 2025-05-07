@@ -243,7 +243,9 @@ static void button_handler(uint32_t button_state, uint32_t has_changed)
 	/* Inform default signal handler about user input at the device. */
 	user_input_indicate();
 
+#if defined CONFIG_ZIGBEE_FACTORY_RESET
 	check_factory_reset_button(button_state, has_changed);
+#endif
 
 	if (bulb_ctx.short_addr == 0xFFFF) {
 		LOG_DBG("No bulb found yet.");
@@ -264,10 +266,13 @@ static void button_handler(uint32_t button_state, uint32_t has_changed)
 			/* Button changed its state to pressed */
 		} else {
 			/* Button changed its state to released */
+#if defined CONFIG_ZIGBEE_FACTORY_RESET
 			if (was_factory_reset_done()) {
 				/* The long press was for Factory Reset */
 				LOG_DBG("After Factory Reset - ignore button release");
-			} else   {
+			} else
+#endif
+            {
 				/* Button released before Factory Reset */
 
 				/* Start identification mode */
@@ -816,7 +821,9 @@ int main(void)
 	/* Initialize. */
 	configure_gpio();
 	alarm_timers_init();
+#if defined CONFIG_ZIGBEE_FACTORY_RESET
 	register_factory_reset_button(FACTORY_RESET_BUTTON);
+#endif
 
 	zigbee_erase_persistent_storage(ERASE_PERSISTENT_CONFIG);
 	zb_set_ed_timeout(ED_AGING_TIMEOUT_64MIN);
