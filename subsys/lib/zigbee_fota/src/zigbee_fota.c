@@ -307,7 +307,7 @@ static zb_uint8_t ota_process_firmware(zb_uint32_t offset, zb_uint8_t *data, uin
 	return ZB_ZCL_OTA_UPGRADE_STATUS_OK;
 }
 
-typedef ZB_PACKED_PRE union ota_callback_packed_param_s
+typedef ZB_PACKED_PRE struct ota_callback_packed_param_s
 {
     zb_zcl_device_callback_param_t pp;        /* Packed parameter. */
     uint8_t                        bytes[1];
@@ -345,7 +345,7 @@ static zb_uint8_t ota_process_chunk(
 	}
 
 	if (ota->pp.upgrade.receive.file_offset != current_offset) {
-#if 0
+#if 1
 		LOG_WRN("Unaligned OTA transfer. Expected: %d, received: %d",
 			current_offset,
 			ota->pp.upgrade.receive.file_offset);
