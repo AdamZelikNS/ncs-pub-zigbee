@@ -314,9 +314,9 @@ typedef ZB_PACKED_PRE union ota_callback_packed_param_s
 } ZB_PACKED_STRUCT ota_callback_packed_param_t;
 
 static inline ota_callback_packed_param_t * ota_callback_param_assume_packed(
-	zb_zcl_device_callback_param_t * p_param)
+	zb_zcl_ota_upgrade_value_param_t * p)
 {
-	return (ota_callback_packed_param_t *)p_param;
+	return (ota_callback_packed_param_t *)p;
 }
 
 /** @brief Code to process the incoming Zigbee OTA frame
