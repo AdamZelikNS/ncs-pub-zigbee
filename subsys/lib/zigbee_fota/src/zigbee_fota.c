@@ -345,9 +345,11 @@ static zb_uint8_t ota_process_chunk(
 	}
 
 	if (ota->pp.upgrade.receive.file_offset != current_offset) {
+#if 0
 		LOG_WRN("Unaligned OTA transfer. Expected: %d, received: %d",
 			current_offset,
 			ota->pp.upgrade.receive.file_offset);
+#endif
 		return ZB_ZCL_OTA_UPGRADE_STATUS_ERROR;
 	}
 
