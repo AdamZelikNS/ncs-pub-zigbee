@@ -12,5 +12,5 @@ manifest:
     - name: nrf
       remote: gh_adze
       repo-path: sdk-nrf
-      revision: tst/nrf54L_fota_1try
+      revision: tst/nrf54L_fota_2try
       import: true
