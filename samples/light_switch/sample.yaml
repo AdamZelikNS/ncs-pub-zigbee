@@ -63,22 +63,9 @@ tests:
       - FILE_SUFFIX=fota
     integration_platforms:
       - nrf52840dk/nrf52840
-    platform_allow:
-      - nrf52840dk/nrf52840
-    tags:
-      - ci_build
-      - smoke
-      - sysbuild
-      - ci_samples_zigbee
-  sample.zigbee.light_switch.fota54L:
-    sysbuild: true
-    build_only: true
-    extra_args:
-      - FILE_SUFFIX=fota
-      - SB_CONFIG_PM_EXTERNAL_FLASH_MCUBOOT_SECONDARY=y
-    integration_platforms:
       - nrf54l15dk/nrf54l15/cpuapp
     platform_allow:
+      - nrf52840dk/nrf52840
       - nrf54l15dk/nrf54l15/cpuapp
     tags:
       - ci_build
