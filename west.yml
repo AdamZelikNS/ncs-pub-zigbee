@@ -10,7 +10,7 @@ manifest:
 
   projects:
     - name: nrf
-      remote: gh_adze
+      remote: ncs
       repo-path: sdk-nrf
-      revision: tst/nrf54L_fota_2try
+      revision: v2.9.0
       import: true
