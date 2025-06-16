@@ -1,0 +1,34 @@
+#
+# Copyright (c) 2024 Nordic Semiconductor
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+source "${ZEPHYR_BASE}/share/sysbuild/Kconfig"
+
+config NRF_DEFAULT_IPC_RADIO
+	default y
+
+if BOOTLOADER_MCUBOOT
+
+#### DFU multi-image support
+config DFU_MULTI_IMAGE_PACKAGE_BUILD
+	default y
+
+config DFU_MULTI_IMAGE_PACKAGE_APP
+	default y
+
+if BOARD_NRF54L15DK_NRF54L15_CPUAPP_NS
+
+config PM_EXTERNAL_FLASH_MCUBOOT_SECONDARY
+	default y
+
+# override the mcuboot pad size, because it is not set globally for NS build.
+config PM_MCUBOOT_PAD
+	default 0x800
+
+endif # BOARD_NRF54L15DK_NRF54L15_CPUAPP_NS
+
+endif # BOOTLOADER_MCUBOOT
+
+source "${ZEPHYR_BASE}/share/sysbuild/Kconfig"
