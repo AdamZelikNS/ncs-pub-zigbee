@@ -811,7 +811,7 @@ void set_tx_power(void)
 
 int main(void)
 {
-	LOG_INF("Starting Zigbee R23 Light Switch example");
+	LOG_INF("Starting Zigbee R23 Light Switch (54L-fota) example");
 
 	/* Initialize. */
 	configure_gpio();
