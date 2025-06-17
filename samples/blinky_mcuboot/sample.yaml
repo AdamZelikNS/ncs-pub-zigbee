@@ -1,12 +1,12 @@
 sample:
-  description: Zigbee Blinky sample for upgrading nrf5340 APP+NET 
+  description: Zigbee Blinky sample for upgrading nrf55L15
   name: Zigbee Blinky mcuboot
 tests:
-  sample.zigbee.shell:
+  sample.zigbee.blinky_mcuboot:
+    sysbuild: true
     build_only: true
-    sysbuild: false
     integration_platforms:
-      - nrf5340dk/nrf5340/cpuapp
-      - nrf5340dk/nrf5340/cpuapp/ns
-    platform_allow: nrf5340dk/nrf5340/cpuapp nrf5340dk/nrf5340/cpuapp/ns
+      - nrf54l15dk/nrf54l15/cpuapp
+    platform_allow:
+      - nrf54l15dk/nrf54l15/cpuapp
     tags: ci_build
