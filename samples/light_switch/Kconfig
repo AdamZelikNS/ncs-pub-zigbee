@@ -25,3 +25,9 @@ config LIGHT_SWITCH_TX_POWER
 	default 0
 	help
 		TX power level in dBm.
+
+config LIGHT_SWITCH_FORCE_LED_BLINK
+	int "LED identifier forced to blink continuously"
+	default -1
+	help
+		Forces one of the LEDs to blink at a fixed interval. A value of -1 disables such blinking.

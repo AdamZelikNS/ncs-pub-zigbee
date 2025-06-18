@@ -38,8 +38,12 @@
 #if CONFIG_BT_NUS
 #include "nus_cmd.h"
 
+#if (CONFIG_LIGHT_SWITCH_FORCE_LED_BLINK == 1)
+#define BLINKING_LED              DK_LED1
+#else               
 /* LED which indicates that Central is connected. */
 #define NUS_STATUS_LED            DK_LED1
+#endif
 /* UART command that will turn on found light bulb(s). */
 #define COMMAND_ON                "n"
 /**< UART command that will turn off found light bulb(s). */
@@ -706,13 +710,17 @@ static void decrease_cmd(struct k_work *item)
 static void on_nus_connect(struct k_work *item)
 {
 	ARG_UNUSED(item);
+#if defined(NUS_STATUS_LED)
 	dk_set_led_on(NUS_STATUS_LED);
+#endif
 }
 
 static void on_nus_disconnect(struct k_work *item)
 {
 	ARG_UNUSED(item);
+#if defined(NUS_STATUS_LED)
 	dk_set_led_off(NUS_STATUS_LED);
+#endif
 }
 
 static struct nus_entry commands[] = {
@@ -813,6 +821,11 @@ int main(void)
 {
 	LOG_INF("Starting Zigbee R23 Light Switch example");
 
+#if ((CONFIG_LIGHT_SWITCH_FORCE_LED_BLINK + 0) > 0)
+	LOG_INF("LED %d forced to blinkat fixed interval",
+	        CONFIG_LIGHT_SWITCH_FORCE_LED_BLINK);
+#endif
+
 	/* Initialize. */
 	configure_gpio();
 	alarm_timers_init();
@@ -876,7 +889,16 @@ int main(void)
 
 	LOG_INF("Zigbee R23 Light Switch example started");
 
+#if !defined(BLINKING_LED)
 	while (1) {
 		k_sleep(K_FOREVER);
 	}
+#else
+	while (1) {
+		dk_set_led_on(BLINKING_LED);
+		k_sleep(K_MSEC(500));
+		dk_set_led_off(BLINKING_LED);
+		k_sleep(K_MSEC(500));
+	}
+#endif
 }
