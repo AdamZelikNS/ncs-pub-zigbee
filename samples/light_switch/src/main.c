@@ -35,7 +35,10 @@
 #define OTA_ACTIVITY_LED          DK_LED2
 #endif /* CONFIG_ZIGBEE_FOTA */
 
-#if CONFIG_BT_NUS
+#if (CONFIG_LIGHT_SWITCH_FORCE_LED_BLINK == 1)
+#define BLINKING_LED              DK_LED1
+
+#elif CONFIG_BT_NUS
 #include "nus_cmd.h"
 
 #if (CONFIG_LIGHT_SWITCH_FORCE_LED_BLINK == 1)
