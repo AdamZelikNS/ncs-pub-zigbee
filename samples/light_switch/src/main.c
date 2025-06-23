@@ -31,8 +31,11 @@
 #include <zephyr/sys/reboot.h>
 #include <zephyr/dfu/mcuboot.h>
 
+#if (CONFIG_LIGHT_SWITCH_FORCE_LED_BLINK != 2)
 /* LED indicating OTA Client Activity. */
 #define OTA_ACTIVITY_LED          DK_LED2
+#endif
+
 #endif /* CONFIG_ZIGBEE_FOTA */
 
 #if (CONFIG_LIGHT_SWITCH_FORCE_LED_BLINK == 1)
@@ -47,6 +50,11 @@
 /* LED which indicates that Central is connected. */
 #define NUS_STATUS_LED            DK_LED1
 #endif
+
+#if (CONFIG_LIGHT_SWITCH_FORCE_LED_BLINK == 2)
+#define BLINKING_LED              DK_LED2
+#endif
+
 /* UART command that will turn on found light bulb(s). */
 #define COMMAND_ON                "n"
 /**< UART command that will turn off found light bulb(s). */
@@ -574,7 +582,9 @@ static void ota_evt_handler(const struct zigbee_fota_evt *evt)
 {
 	switch (evt->id) {
 	case ZIGBEE_FOTA_EVT_PROGRESS:
+#if defined(OTA_ACTIVITY_LED)
 		dk_set_led(OTA_ACTIVITY_LED, evt->dl.progress % 2);
+#endif
 		break;
 
 	case ZIGBEE_FOTA_EVT_FINISHED:
@@ -825,7 +835,7 @@ int main(void)
 	LOG_INF("Starting Zigbee R23 Light Switch example");
 
 #if ((CONFIG_LIGHT_SWITCH_FORCE_LED_BLINK + 0) > 0)
-	LOG_INF("LED %d forced to blinkat fixed interval",
+	LOG_INF("LED %d forced to blink at fixed interval",
 	        CONFIG_LIGHT_SWITCH_FORCE_LED_BLINK);
 #endif
 
