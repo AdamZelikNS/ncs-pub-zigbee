@@ -11,7 +11,7 @@
 #define SLEEP_TIME_MS   1000
 
 /* The devicetree node identifier for the "led0" alias. */
-#define LED1_NODE DT_ALIAS(led1)
+#define LED2_NODE DT_ALIAS(led2)
 
 #if IS_ENABLED(CONFIG_NCS_INCLUDE_BLINKY_CHILD_IMAGE)
 #pragma message "We have NCS_INCLUDE_BLINKY_CHILD_IMAGE"
@@ -29,7 +29,7 @@
  * A build error on this line means your board is unsupported.
  * See the sample documentation for information on how to fix this.
  */
-static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED1_NODE, gpios);
+static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED2_NODE, gpios);
 
 int main(void)
 {
