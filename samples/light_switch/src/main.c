@@ -814,12 +814,19 @@ void set_tx_power(void)
 		}
 	}
 }
-
 #endif /* CONFIG_LIGHT_SWITCH_CONFIGURE_TX_POWER */
+
+#if defined(CONFIG_SOC_NRF54L10)
+#define SOC_54LX " 54L10 "
+#elif defined(CONFIG_SOC_NRF54L15)
+#define SOC_54LX " 54L15 "
+#else
+#define SOC_54LX " "
+#endif
 
 int main(void)
 {
-	LOG_INF("Starting Zigbee R23 Light Switch example");
+	LOG_INF("Starting Zigbee R23 Light Switch" SOC_54LX "example");
 #if defined(CONFIG_MCUBOOT_IMGTOOL_SIGN_VERSION)
 	LOG_INF("Imgtool (McuBoot) sign version: " CONFIG_MCUBOOT_IMGTOOL_SIGN_VERSION);
 #endif
