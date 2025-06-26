@@ -21,8 +21,10 @@ tests:
       - FILE_SUFFIX=fota
     integration_platforms:
       - nrf54l15dk/nrf54l15/cpuapp
+      - nrf54l15dk/nrf54l10/cpuapp
     platform_allow:
       - nrf54l15dk/nrf54l15/cpuapp
+      - nrf54l15dk/nrf54l10/cpuapp
     tags:
       - ci_build
       - smoke
