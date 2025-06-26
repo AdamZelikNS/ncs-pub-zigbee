@@ -187,6 +187,9 @@ extern zb_af_endpoint_desc_t zigbee_fota_client_ep;
 ZBOSS_DECLARE_DEVICE_CTX_2_EP(dimmer_switch_ctx,
 			      zigbee_fota_client_ep,
 			      dimmer_switch_ep);
+
+int volatile pnt_ota_progress = 0;
+
 #endif /* CONFIG_ZIGBEE_FOTA */
 
 /* Forward declarations. */
@@ -568,6 +571,11 @@ static void ota_evt_handler(const struct zigbee_fota_evt *evt)
 	switch (evt->id) {
 	case ZIGBEE_FOTA_EVT_PROGRESS:
 		dk_set_led(OTA_ACTIVITY_LED, evt->dl.progress % 2);
+        if (pnt_ota_progress)
+        {
+		    LOG_INF("ota progress: %d", evt->dl.progress);
+            pnt_ota_progress = 0;
+        }
 		break;
 
 	case ZIGBEE_FOTA_EVT_FINISHED:
@@ -812,6 +820,9 @@ void set_tx_power(void)
 int main(void)
 {
 	LOG_INF("Starting Zigbee R23 Light Switch example");
+#if defined(CONFIG_MCUBOOT_IMGTOOL_SIGN_VERSION)
+	LOG_INF("Imgtool (McuBoot) sign version: " CONFIG_MCUBOOT_IMGTOOL_SIGN_VERSION);
+#endif
 
 	/* Initialize. */
 	configure_gpio();
@@ -876,7 +887,14 @@ int main(void)
 
 	LOG_INF("Zigbee R23 Light Switch example started");
 
+#ifndef CONFIG_ZIGBEE_FOTA
 	while (1) {
 		k_sleep(K_FOREVER);
 	}
+#else
+	while (1) {		
+		k_sleep(K_MSEC(500));
+		pnt_ota_progress = 1;
+	}
+#endif
 }
