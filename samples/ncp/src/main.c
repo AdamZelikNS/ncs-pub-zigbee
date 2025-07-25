@@ -154,8 +154,10 @@ static zb_uint16_t ncp_vendor_specific_req_handler(zb_uint8_t buf)
 
 zb_uint32_t zb_osif_get_ncp_protocol_version(void)
 {
-#if 1
+#if 0
 	return 0x01;
+#elif 1
+	return 0x00;
 #endif
 }
 
