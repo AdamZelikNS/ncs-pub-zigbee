@@ -789,15 +789,9 @@ ZB_WEAK_PRE zb_uint32_t ZB_WEAK zb_osif_get_fw_version(void)
 	return 0x01;
 }
 
-ZB_WEAK_PRE zb_uint32_t ZB_WEAK zb_osif_get_ncp_protocol_version(void)
+zb_uint32_t zb_osif_get_ncp_protocol_version(void)
 {
-#if 1
-	return 0x01;
-#elif defined(ZB_NCP_PROTOCOL_VERSION)
-	return ZB_NCP_PROTOCOL_VERSION;
-#else /* ZB_NCP_PROTOCOL_VERSION */
-	return 0x01;
-#endif /* ZB_NCP_PROTOCOL_VERSION */
+	return 0x0000;
 }
 
 ZB_WEAK_PRE zb_ret_t ZB_WEAK zb_osif_bootloader_run_after_reboot(void)
