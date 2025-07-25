@@ -792,7 +792,7 @@ ZB_WEAK_PRE zb_uint32_t ZB_WEAK zb_osif_get_fw_version(void)
 ZB_WEAK_PRE zb_uint32_t ZB_WEAK zb_osif_get_ncp_protocol_version(void)
 {
 #if 1
-	return 0x00;
+	return 0x01;
 #elif defined(ZB_NCP_PROTOCOL_VERSION)
 	return ZB_NCP_PROTOCOL_VERSION;
 #else /* ZB_NCP_PROTOCOL_VERSION */
