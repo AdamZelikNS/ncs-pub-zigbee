@@ -75,7 +75,7 @@ zb_uint32_t zb_osif_get_fw_version(void);
 
 /* Read the NCP protocol version. This function may be redefined by the application. */
 zb_uint32_t zb_osif_get_ncp_protocol_version(void);
-#define NCP_PROTOCOL_VERSION            0x0000u
+#define NCP_PROTOCOL_VERSION            0x0001u
 
 
 void zb_osif_timer_init(void);

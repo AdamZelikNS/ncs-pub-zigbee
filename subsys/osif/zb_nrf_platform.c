@@ -791,7 +791,7 @@ ZB_WEAK_PRE zb_uint32_t ZB_WEAK zb_osif_get_fw_version(void)
 
 zb_uint32_t zb_osif_get_ncp_protocol_version(void)
 {
-	return 0x0000;
+	return 0x0001;
 }
 
 ZB_WEAK_PRE zb_ret_t ZB_WEAK zb_osif_bootloader_run_after_reboot(void)
