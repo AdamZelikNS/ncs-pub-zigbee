@@ -48,3 +48,17 @@ tests:
       - ci_samples_zigbee
     extra_args:
       - FILE_SUFFIX=dongle
+  sample.zigbee.ncp.p1i:
+    sysbuild: true
+    build_only: true
+    integration_platforms:
+      - nrf52840dk/nrf52840
+    platform_allow:
+      - nrf52840dk/nrf52840
+    tags:
+      - ci_build
+      - ncp
+      - sysbuild
+      - ci_samples_zigbee
+    extra_args:
+      - FILE_SUFFIX=p1i

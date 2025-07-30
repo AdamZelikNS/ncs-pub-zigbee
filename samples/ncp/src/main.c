@@ -212,6 +212,8 @@ int main(void)
 
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
+	
+	LOG_INF("ncp_DBG extra logs enabled");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
