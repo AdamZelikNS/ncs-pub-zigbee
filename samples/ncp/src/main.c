@@ -162,9 +162,23 @@ static void ncp_vendor_specific_init(void)
 						  VENDOR_SPECIFIC_IND_DELAY);
 }
 
+zb_uint32_t volatile ncp_DBG_fill_resp_hdr_tsn; // init 0xFFFFFFFFuL
+zb_ret_t    volatile ncp_DBG_fill_resp_hdr_st;
+zb_uint_t   volatile ncp_DBG_fill_resp_hdr_siz;
+
+const char * volatile ncp_DBG_register_req_txt;
+zb_uint32_t volatile  ncp_DBG_register_req_tsn;  // init 0xFFFFFFFFuL
+
+zb_uint32_t volatile  ncp_DBG_send_packet_fail;  // init 0xFFFFFFFFuL
+
+
 int main(void)
 {
 	LOG_INF("Starting Zigbee R23 Network Co-processor sample");
+
+    ncp_DBG_fill_resp_hdr_tsn = 0xFFFFFFFFuL;
+    ncp_DBG_register_req_tsn  = 0xFFFFFFFFuL;
+    ncp_DBG_send_packet_fail  = 0xFFFFFFFFuL;
 
 #ifdef CONFIG_USB_DEVICE_STACK
 	/* Enable USB device. */
@@ -213,12 +227,58 @@ int main(void)
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
 	
-	LOG_INF("ncp_DBG extra logs enabled");
+	LOG_INF("ncp_DBG extra logs enabled now");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
 
 	LOG_INF("Zigbee R23 Network Co-processor sample started");
 
+	while (1) {
+        k_sleep(K_MSEC(200));
+
+        if (ncp_DBG_fill_resp_hdr_tsn != 0xFFFFFFFFuL)
+        {
+           zb_uint32_t tsn = ncp_DBG_fill_resp_hdr_tsn;
+           zb_uint32_t body_size = ncp_DBG_fill_resp_hdr_siz;
+           zb_uint32_t sta = ncp_DBG_fill_resp_hdr_st;
+           LOG_INF("ncp_DBG fill_resp_hdr - tsn %d status %d b_size %d", tsn, body_size, sta);
+           ncp_DBG_fill_resp_hdr_tsn = 0xFFFFFFFFuL;
+        }
+
+        if (ncp_DBG_register_req_tsn != 0xFFFFFFFFuL)
+        {
+           zb_uint32_t tsn = ncp_DBG_register_req_tsn;
+           const char * info_txt = ncp_DBG_register_req_txt;
+           LOG_INF("ncp_DBG register_request - tsn %d info %s", tsn, info_txt);
+           ncp_DBG_register_req_tsn = 0xFFFFFFFFuL;
+        }
+
+        if (ncp_DBG_send_packet_fail != 0xFFFFFFFFuL)
+        {
+           zb_uint32_t fail_id = ncp_DBG_send_packet_fail;
+           LOG_INF("ncp_DBG send_packet_fail - id %d", fail_id);
+           ncp_DBG_send_packet_fail = 0xFFFFFFFFuL;
+        }
+	}
+
 	return 0;
+}
+
+void ncp_joining_DBG_fill_resp_hdr(zb_uint8_t tsnv, zb_ret_t st, zb_uint_t body_siz)
+{
+    ncp_DBG_fill_resp_hdr_st    = st;
+    ncp_DBG_fill_resp_hdr_siz   = body_siz;
+    ncp_DBG_fill_resp_hdr_tsn   = tsnv; // init 0xFFFFFFFFuL
+}
+
+void ncp_joining_DBG_register_request(zb_uint8_t tsnv, const char * info_txt)
+{
+    ncp_DBG_register_req_txt = info_txt;
+    ncp_DBG_register_req_tsn = tsnv;  // init 0xFFFFFFFFuL
+}
+
+void ncp_joining_DBG_send_packet_failed(zb_uint16_t cId)
+{
+    ncp_DBG_send_packet_fail = cId;
 }
