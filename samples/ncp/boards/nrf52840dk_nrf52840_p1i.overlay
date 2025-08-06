@@ -11,12 +11,6 @@
 	status = "okay";
 };
 
-&zephyr_udc0 {
-	cdc_acm_uart0: cdc_acm_uart0 {
-		compatible = "zephyr,cdc-acm-uart";
-	};
-};
-
 &pinctrl {
 	uart1_default_alt: uart1_default_alt {
 		group1 {
