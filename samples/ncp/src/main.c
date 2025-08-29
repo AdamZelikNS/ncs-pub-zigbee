@@ -171,6 +171,93 @@ zb_uint32_t volatile  ncp_DBG_register_req_tsn;  // init 0xFFFFFFFFuL
 
 zb_uint32_t volatile  ncp_DBG_send_packet_fail;  // init 0xFFFFFFFFuL
 
+void ncp_joining_DBG_send_packet_failed(zb_uint16_t cId)
+{
+    ncp_DBG_send_packet_fail = cId;
+}
+
+zb_uint32_t volatile  ncp_DBG_mode_nondef_id;  // init 0xFFFFFFFFuL
+zb_uint16_t volatile  ncp_DBG_mode_nondef_cat;
+zb_uint16_t volatile  ncp_DBG_mode_nondef_len;
+
+void ncp_joining_DBG_mode_nondef(zb_uint16_t ctx_mode, zb_uint16_t call_cat, zb_uint16_t lengt)
+{
+   ncp_DBG_mode_nondef_id   = ctx_mode;
+   ncp_DBG_mode_nondef_cat  = call_cat;
+   ncp_DBG_mode_nondef_len  = lengt;
+}
+
+static void ncp_joining_DBG_mode_nondf_show(void)
+{
+    if (ncp_DBG_mode_nondef_id != 0xFFFFFFFFuL)
+    {
+       zb_uint32_t fail_id = ncp_DBG_mode_nondef_id;
+       zb_uint16_t cat = ncp_DBG_mode_nondef_cat;
+       zb_uint16_t len = ncp_DBG_mode_nondef_len;
+       LOG_INF("ncp_DBG mode_nondef - id %d cat %d len %d", fail_id, cat, len);
+       ncp_DBG_mode_nondef_id = 0xFFFFFFFFuL;
+    }
+}
+
+zb_uint32_t volatile  ncp_DBG_illeg_req_pkttype;  // init 0xFFFFFFFFuL
+zb_uint16_t volatile  ncp_DBG_illeg_req_cat;
+zb_uint16_t volatile  ncp_DBG_illeg_req_len;
+
+void ncp_joining_DBG_illeg_req(zb_uint16_t pkt_typ, zb_uint16_t call_cat, zb_uint16_t lengt)
+{
+   ncp_DBG_illeg_req_pkttype = pkt_typ;
+   ncp_DBG_illeg_req_cat = call_cat;
+   ncp_DBG_illeg_req_len = lengt;
+}
+
+static void ncp_joining_DBG_illegal_req_show(void)
+{
+    if (ncp_DBG_illeg_req_pkttype != 0xFFFFFFFFuL)
+    {
+       zb_uint32_t pkt_type = ncp_DBG_illeg_req_pkttype;
+       zb_uint16_t cat = ncp_DBG_illeg_req_cat;
+       zb_uint16_t len = ncp_DBG_illeg_req_len;
+       LOG_INF("ncp_DBG illegal_req - pkt_type %d cat %d len %d", pkt_type, cat, len);
+       ncp_DBG_illeg_req_pkttype = 0xFFFFFFFFuL;
+    }
+}
+
+const void * volatile  ncp_DBG_send_pkt_data;  // init 0 
+zb_uint16_t volatile   ncp_DBG_send_pkt_len;
+
+void ncp_joining_DBG_send_pkt(const void *p_data, zb_uint16_t tx_lengt)
+{
+    ncp_DBG_send_pkt_data = p_data;
+    ncp_DBG_send_pkt_len  = tx_lengt;
+}
+
+static void ncp_joining_DBG_send_packet_show(void)
+{
+    if (ncp_DBG_send_pkt_data != (const void *)0)
+    {
+       zb_uint16_t len = ncp_DBG_mode_nondef_len;
+       LOG_INF("ncp_DBG send_packet - len %d", len);
+       ncp_DBG_send_pkt_data = (const void *)0;
+    }
+}
+
+zb_uint32_t volatile  ncp_DBG_send_later_len;  // init 0xFFFFFFFFuL
+
+void ncp_joining_DBG_send_later(zb_uint16_t lengt)
+{
+    ncp_DBG_send_later_len = lengt;
+}
+
+static void ncp_joining_DBG_send_later_show(void)
+{
+    if (ncp_DBG_send_later_len != 0xFFFFFFFFuL)
+    {
+       zb_uint16_t len = ncp_DBG_send_later_len;
+       LOG_INF("ncp_DBG send_later - len %d", len);
+       ncp_DBG_send_later_len = 0xFFFFFFFFuL;
+    }
+}
+
 
 int main(void)
 {
@@ -260,6 +347,11 @@ int main(void)
            LOG_INF("ncp_DBG send_packet_fail - id %d", fail_id);
            ncp_DBG_send_packet_fail = 0xFFFFFFFFuL;
         }
+
+        ncp_joining_DBG_mode_nondf_show();
+        ncp_joining_DBG_illegal_req_show();
+        ncp_joining_DBG_send_packet_show();
+        ncp_joining_DBG_send_later_show();
 	}
 
 	return 0;
@@ -276,9 +368,4 @@ void ncp_joining_DBG_register_request(zb_uint8_t tsnv, const char * info_txt)
 {
     ncp_DBG_register_req_txt = info_txt;
     ncp_DBG_register_req_tsn = tsnv;  // init 0xFFFFFFFFuL
-}
-
-void ncp_joining_DBG_send_packet_failed(zb_uint16_t cId)
-{
-    ncp_DBG_send_packet_fail = cId;
 }
