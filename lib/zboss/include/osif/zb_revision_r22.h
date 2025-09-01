@@ -12,7 +12,7 @@
  *
  * Note: This value is automatically updated by the release script.
  */
-#define ZBOSS_SDK_REVISION 12U
+#define ZBOSS_SDK_REVISION 13U
 
 /**
  * Major version number of the ZBOSS platform for NCS.
