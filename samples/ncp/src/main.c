@@ -164,6 +164,31 @@ static void ncp_vendor_specific_init(void)
 						  VENDOR_SPECIFIC_IND_DELAY);
 }
 
+void zb_dbg0_raise(zb_uint8_t s_l, zb_uint32_t err_id)
+{
+    LOG_ERR("ZBOSS ERR Raise err_id %d severity %d", err_id, (zb_uint32_t)s_l);
+}
+
+void zb_dbg0_abort(char * f, int line_nm)
+{
+    LOG_ERR("ZBOSS Abort line %d file %s", line_nm, f);
+}
+
+void zb_dbg0_assert1t(const char * f, zb_int_t line_nm)
+{
+    LOG_ERR("ZBOSS Assert line %d file %s", line_nm, f);
+}
+
+void zb_dbg0_assert2b(zb_uint16_t fi_id, zb_int_t line_nm)
+{
+    LOG_ERR("ZBOSS Assert file_id %d line %d", fi_id, line_nm);
+}
+
+void zb_dbg0_verify(zb_uint16_t fi_id, zb_int_t line_nm, zb_uint32_t err_id)
+{
+    LOG_ERR("ZBOSS Verify fail file_id %d line %d err %d", fi_id, line_nm, err_id);
+}
+
 zb_uint32_t volatile ncp_DBG_fill_resp_hdr_tsn; // init 0xFFFFFFFFuL
 zb_ret_t    volatile ncp_DBG_fill_resp_hdr_st;
 zb_uint_t   volatile ncp_DBG_fill_resp_hdr_siz;
