@@ -24,6 +24,8 @@
 #include <zephyr/dfu/mcuboot.h>
 #endif
 
+#include <stdio.h>
+
 LOG_MODULE_REGISTER(app, LOG_LEVEL_INF);
 
 #define VENDOR_SPECIFIC_LED DK_LED2
@@ -233,10 +235,26 @@ void ncp_joining_DBG_send_pkt(const void *p_data, zb_uint16_t tx_lengt)
 
 static void ncp_joining_DBG_send_packet_show(void)
 {
+    static char sbuf[256];
+
     if (ncp_DBG_send_pkt_data != (const void *)0)
     {
        zb_uint16_t len = ncp_DBG_mode_nondef_len;
-       LOG_INF("ncp_DBG send_packet - len %d", len);
+       unsigned char const * const p_d = 
+         (unsigned char const *)ncp_DBG_send_pkt_data;
+
+       char * p_b = &(sbuf[0]); 
+       for (uint8_t j = 0; j <= len; j++)
+       {
+           int ch_added = sprintf(p_b, "%02x ", ((int)(p_d[j])));
+           p_b += ch_added;
+           if (p_b > &(sbuf[sizeof(sbuf)-4]))
+           {
+             (*p_b) = 0;
+             break;
+           }  
+       }
+       LOG_INF("ncp_DBG send_packet - len %d d:%s", len, sbuf);
        ncp_DBG_send_pkt_data = (const void *)0;
     }
 }
@@ -314,7 +332,7 @@ int main(void)
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
 	
-	LOG_INF("ncp_DBG extra logs enabled now");
+	LOG_INF("ncp_DBG extra logs 05v enabled");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
