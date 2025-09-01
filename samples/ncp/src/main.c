@@ -224,7 +224,7 @@ static void ncp_joining_DBG_illegal_req_show(void)
     }
 }
 
-const void * volatile  ncp_DBG_send_pkt_data;  // init 0 
+const void * volatile  ncp_DBG_send_pkt_data;  // init 0
 zb_uint16_t volatile   ncp_DBG_send_pkt_len;
 
 void ncp_joining_DBG_send_pkt(const void *p_data, zb_uint16_t tx_lengt)
@@ -240,10 +240,10 @@ static void ncp_joining_DBG_send_packet_show(void)
     if (ncp_DBG_send_pkt_data != (const void *)0)
     {
        zb_uint16_t len = ncp_DBG_mode_nondef_len;
-       unsigned char const * const p_d = 
+       unsigned char const * const p_d =
          (unsigned char const *)ncp_DBG_send_pkt_data;
 
-       char * p_b = &(sbuf[0]); 
+       char * p_b = &(sbuf[0]);
        for (uint8_t j = 0; j <= len; j++)
        {
            int ch_added = sprintf(p_b, "%02x ", ((int)(p_d[j])));
@@ -252,7 +252,7 @@ static void ncp_joining_DBG_send_packet_show(void)
            {
              (*p_b) = 0;
              break;
-           }  
+           }
        }
        LOG_INF("ncp_DBG send_packet - len %d d:%s", len, sbuf);
        ncp_DBG_send_pkt_data = (const void *)0;
@@ -284,6 +284,10 @@ int main(void)
     ncp_DBG_fill_resp_hdr_tsn = 0xFFFFFFFFuL;
     ncp_DBG_register_req_tsn  = 0xFFFFFFFFuL;
     ncp_DBG_send_packet_fail  = 0xFFFFFFFFuL;
+    ncp_DBG_send_later_len    = 0xFFFFFFFFuL;
+    ncp_DBG_mode_nondef_id    = 0xFFFFFFFFuL;
+    ncp_DBG_illeg_req_pkttype = 0xFFFFFFFFuL;
+    ncp_DBG_send_pkt_data     = (const void *)0;
 
 #ifdef CONFIG_USB_DEVICE_STACK
 	/* Enable USB device. */
