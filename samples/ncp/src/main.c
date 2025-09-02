@@ -306,10 +306,11 @@ zb_uint32_t volatile  ncp_DBG_cmd_stopped;  // init 0xFFFFFFFFuL
 zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
 {
   if (ncp_DBG_cmd_stopped == 0xFFFFFFFFuL)
+  {
      ncp_DBG_cmd_stopped = op_id;
-  
+  }
+  return 0;  
 }
-
 
 
 int main(void)
