@@ -301,6 +301,16 @@ static void ncp_joining_DBG_send_later_show(void)
     }
 }
 
+zb_uint32_t volatile  ncp_DBG_cmd_stopped;  // init 0xFFFFFFFFuL
+
+zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
+{
+  if (ncp_DBG_cmd_stopped == 0xFFFFFFFFuL)
+     ncp_DBG_cmd_stopped = op_id;
+  
+}
+
+
 
 int main(void)
 {
@@ -313,6 +323,7 @@ int main(void)
     ncp_DBG_mode_nondef_id    = 0xFFFFFFFFuL;
     ncp_DBG_illeg_req_pkttype = 0xFFFFFFFFuL;
     ncp_DBG_send_pkt_data     = (const void *)0;
+    ncp_DBG_cmd_stopped = 0xFFFFFFFFuL;
 
 #ifdef CONFIG_USB_DEVICE_STACK
 	/* Enable USB device. */
@@ -393,6 +404,13 @@ int main(void)
            zb_uint32_t fail_id = ncp_DBG_send_packet_fail;
            LOG_INF("ncp_DBG send_packet_fail - id %d", fail_id);
            ncp_DBG_send_packet_fail = 0xFFFFFFFFuL;
+        }
+        
+        if (ncp_DBG_cmd_stopped != 0xFFFFFFFFuL)
+        {
+           zb_uint32_t stop_id = ncp_DBG_cmd_stopped;
+           LOG_INF("ncp_DBG stop_id  %d", stop_id);
+           ncp_DBG_cmd_stopped = 0xFFFFFFFFuL;
         }
 
         ncp_joining_DBG_mode_nondf_show();
