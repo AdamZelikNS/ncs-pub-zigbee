@@ -179,11 +179,12 @@ void zb_dbg0_assert1t(const char * f, zb_int_t line_nm)
     LOG_ERR("ZBOSS Assert line %d file %s", line_nm, f);
 }
 
-zb_uint32_t volatile ncp_DBG_cmd_startd_tsn[4];
-zb_uint32_t volatile ncp_DBG_cmd_startd_callid[4];
-zb_uint16_t volatile ncp_DBG_cmd_stop_seq[4];
-zb_uint32_t volatile ncp_DBG_cmd_address_pib;
-zb_uint32_t volatile ncp_DBG_cmd_address_req;
+zb_uint32_t volatile ncp_DBG_cmd_startd_tsn[8];
+zb_uint32_t volatile ncp_DBG_cmd_startd_callid[8];
+zb_uint16_t volatile ncp_DBG_cmd_stop_seq[8];
+zb_uint16_t volatile ncp_DBG_cmd_stop_tsn[8];
+zb_uint32_t volatile ncp_DBG_cmd_address_pib[8];
+zb_uint32_t volatile ncp_DBG_cmd_address_req[8];
 zb_uint32_t volatile ncp_DBG_cmd_permit_joing_bufid;
 zb_uint32_t volatile ncp_DBG_cmd_permit_joing_cb;
 zb_uint16_t volatile ncp_DBG_cmd_permit_joing_is_joind;
@@ -217,21 +218,18 @@ void zb_dbg0_assert2b(zb_uint16_t fi_id, zb_int_t line_nm)
     zb_uint32_t v32a, v32b;
     zb_uint16_t n;
 
-    for (n = 0; n < 4; n ++)
+    for (n = 0; n < 8; n ++)
     {
       v32a = ncp_DBG_cmd_startd_tsn[n];
       v32b = ncp_DBG_cmd_startd_callid[n];
       if (v32a != 0xFFFFFFFFuL)
       {
          LOG_ERR("ncp_DBG started[%d] tsn %d call_id %d", n, v32a, v32b);
-      }
-    }
 
-    v32a = ncp_DBG_cmd_address_pib;
-    v32b = ncp_DBG_cmd_address_req;
-    if (v32a != 0xFFFFFFFFuL)
-    {
+         v32a = ncp_DBG_cmd_address_pib[n];
+         v32b = ncp_DBG_cmd_address_req[n];
          LOG_ERR("ncp_DBG req_addr pib %d req %d", v32a, v32b);
+      }
     }
 
     v32a = ncp_DBG_cmd_permit_joing_bufid;
@@ -242,12 +240,13 @@ void zb_dbg0_assert2b(zb_uint16_t fi_id, zb_int_t line_nm)
          LOG_ERR("ncp_DBG permit_joing bufid %d cb %d is_joined %d", v32a, v32b, n);
     }
 
-    for (n = 0; n < 4; n ++)
+    for (n = 0; n < 8; n ++)
     {
       zb_uint16_t cmd_stop_id = ncp_DBG_cmd_stop_seq[n];
       if (cmd_stop_id != 0xFFFFuL)
       {
-        LOG_ERR("ncp_DBG stop[%d] : %d", n,  cmd_stop_id);
+        zb_uint16_t tsn = ncp_DBG_cmd_stop_tsn[n];
+        LOG_ERR("ncp_DBG stop[%d] : %d tsn %d", n, cmd_stop_id, tsn);
       }
     }
 
@@ -371,31 +370,39 @@ static void ncp_joining_DBG_send_later_show(void)
     }
 }
 
-void ncp_joining_DBG_started(zb_uint32_t hdr_tsn, zb_uint32_t hdr_call_id)
+zb_uint8_t ncp_joining_DBG_started(zb_uint32_t hdr_tsn, zb_uint32_t hdr_call_id)
 {
+  const zb_uint8_t nmax = 8; 
   zb_uint8_t n;
-  for (n = 0; n < 4; n ++)
+  for (n = 0; n < nmax; n ++)
   {
     if (ncp_DBG_cmd_startd_tsn[n] == 0xFFFFFFFFuL)
     { 
       ncp_DBG_cmd_startd_tsn[n]     = hdr_tsn;
       ncp_DBG_cmd_startd_callid[n]  = hdr_call_id;
+      break;
     }
   }
+
+  return ((n < nmax) ? n : 0xFFu);
 }
 
-void ncp_joining_DBG_short_ad(zb_uint32_t addr_pib, zb_uint32_t addr_req)
+void ncp_joining_DBG_short_ad(zb_uint8_t start_id, zb_uint32_t addr_pib, zb_uint32_t addr_req)
 {
-   ncp_DBG_cmd_address_pib = addr_pib;
-   ncp_DBG_cmd_address_req = addr_req;
+   if (start_id < 0xFFu)
+   {
+     ncp_DBG_cmd_address_pib[start_id] = addr_pib;
+     ncp_DBG_cmd_address_req[start_id] = addr_req;
+   }
 }
 
 zb_uint32_t volatile ncp_DBG_cmd_stopped;  // init 0xFFFFFFFFuL
 
 zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
 {
+  const zb_uint8_t nmax = 8; 
   zb_uint8_t n;
-  for (n = 0; n < 4; n ++)
+  for (n = 0; n < nmax; n ++)
   {
     if (ncp_DBG_cmd_stop_seq[n] == 0xFFFFuL)
     {
@@ -408,13 +415,22 @@ zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
   {
      ncp_DBG_cmd_stopped = op_id;
   }
-  return 0;
+
+  return ((n < nmax) ? n : 0xFFu);
 }
 
+void ncp_joining_DBG_stop_result(zb_uint8_t stop_id, zb_uint32_t stop_tsn)
+{
+   if (stop_id < 0xFFu)
+   {
+      ncp_DBG_cmd_stop_tsn[stop_id] = stop_tsn;
+   }
+}
 
 
 int main(void)
 {
+    int n_seq;
 	LOG_INF("Starting Zigbee R23 Network Co-processor sample");
 
     ncp_DBG_fill_resp_hdr_tsn = 0xFFFFFFFFuL;
@@ -424,21 +440,16 @@ int main(void)
     ncp_DBG_mode_nondef_id    = 0xFFFFFFFFuL;
     ncp_DBG_illeg_req_pkttype = 0xFFFFFFFFuL;
     ncp_DBG_send_pkt_data     = (const void *)0;
-    ncp_DBG_cmd_stopped = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_stop_seq[0] = 0xFFFF;
-    ncp_DBG_cmd_stop_seq[1] = 0xFFFF;
-    ncp_DBG_cmd_stop_seq[2] = 0xFFFF;
-    ncp_DBG_cmd_stop_seq[3] = 0xFFFF;
-    ncp_DBG_cmd_startd_tsn[0]     = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_startd_callid[0]  = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_startd_tsn[1]     = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_startd_callid[1]  = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_startd_tsn[2]     = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_startd_callid[2]  = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_startd_tsn[3]     = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_startd_callid[3]  = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_address_pib    = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_address_req    = 0xFFFFFFFFuL;
+    ncp_DBG_cmd_stopped = 0xFFFFFFFFuL;    
+    for (n_seq = 0; n_seq < 8; n_seq ++)
+    {
+        ncp_DBG_cmd_stop_seq[n_seq]       = 0xFFFF;
+        ncp_DBG_cmd_stop_tsn[n_seq]       = 0xFFFF;
+        ncp_DBG_cmd_startd_tsn[n_seq]     = 0xFFFFFFFFuL;
+        ncp_DBG_cmd_startd_callid[n_seq]  = 0xFFFFFFFFuL;
+        ncp_DBG_cmd_address_pib[n_seq]    = 0xFFFFFFFFuL;
+        ncp_DBG_cmd_address_req[n_seq]    = 0xFFFFFFFFuL;
+    }
     ncp_DBG_cmd_permit_joing_bufid    = 0xFFFFFFFFuL;
     ncp_DBG_cmd_permit_joing_cb       = 0xFFFFFFFFuL;
     ncp_DBG_cmd_permit_joing_is_joind = 0xFFFFu;
@@ -494,7 +505,7 @@ int main(void)
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
 	
-	LOG_INF("ncp_DBG extra logs 09v enabled");
+	LOG_INF("ncp_DBG extra logs 10v enabled");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
