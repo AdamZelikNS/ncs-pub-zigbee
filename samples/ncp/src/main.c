@@ -179,6 +179,7 @@ void zb_dbg0_assert1t(const char * f, zb_int_t line_nm)
     LOG_ERR("ZBOSS Assert line %d file %s", line_nm, f);
 }
 
+zb_uint8_t  volatile ncp_DBG_cmd_start_stop_show = 0;
 zb_uint32_t volatile ncp_DBG_cmd_startd_tsn[8];
 zb_uint32_t volatile ncp_DBG_cmd_startd_callid[8];
 zb_uint16_t volatile ncp_DBG_cmd_stop_seq[8];
@@ -213,7 +214,7 @@ void ncp_joining_DBG_req_cli_1c(zb_uint8_t schedule_id, zb_uint32_t req_tsn)
   }
 }
 
-void zb_dbg0_assert2b(zb_uint16_t fi_id, zb_int_t line_nm)
+static void ncp_joining_DBG_show_start_stop(void)
 {
     zb_uint32_t v32a, v32b;
     zb_uint16_t n;
@@ -249,7 +250,28 @@ void zb_dbg0_assert2b(zb_uint16_t fi_id, zb_int_t line_nm)
         LOG_ERR("ncp_DBG stop[%d] : %d tsn %d", n, cmd_stop_id, tsn);
       }
     }
+}
 
+static void ncp_joining_DBG_mode_nondf_show(void);
+static void ncp_joining_DBG_illegal_req_show(void);
+static void ncp_joining_DBG_send_packet_show(void);
+static void ncp_joining_DBG_send_later_show(void);
+static void ncp_joining_DBG_fill_register_req_show(void);
+static void ncp_joining_DBG_fill_resp_hdr_show(void);
+static void ncp_joining_DBG_send_packet_fail_show(void);
+static void ncp_joining_DBG_cmd_stopped_show(void);
+
+void zb_dbg0_assert2b(zb_uint16_t fi_id, zb_int_t line_nm)
+{
+    ncp_joining_DBG_show_start_stop();
+    ncp_joining_DBG_fill_register_req_show();
+    ncp_joining_DBG_fill_resp_hdr_show();
+    ncp_joining_DBG_send_packet_fail_show();
+    ncp_joining_DBG_cmd_stopped_show();
+    ncp_joining_DBG_mode_nondf_show();
+    ncp_joining_DBG_illegal_req_show();
+    ncp_joining_DBG_send_packet_show();
+    ncp_joining_DBG_send_later_show();
     LOG_ERR("ZBOSS Assert file_id %d line %d", fi_id, line_nm);
 }
 
@@ -372,12 +394,12 @@ static void ncp_joining_DBG_send_later_show(void)
 
 zb_uint8_t ncp_joining_DBG_started(zb_uint32_t hdr_tsn, zb_uint32_t hdr_call_id)
 {
-  const zb_uint8_t nmax = 8; 
+  const zb_uint8_t nmax = 8;
   zb_uint8_t n;
   for (n = 0; n < nmax; n ++)
   {
     if (ncp_DBG_cmd_startd_tsn[n] == 0xFFFFFFFFuL)
-    { 
+    {
       ncp_DBG_cmd_startd_tsn[n]     = hdr_tsn;
       ncp_DBG_cmd_startd_callid[n]  = hdr_call_id;
       break;
@@ -400,7 +422,7 @@ zb_uint32_t volatile ncp_DBG_cmd_stopped;  // init 0xFFFFFFFFuL
 
 zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
 {
-  const zb_uint8_t nmax = 8; 
+  const zb_uint8_t nmax = 8;
   zb_uint8_t n;
   for (n = 0; n < nmax; n ++)
   {
@@ -427,6 +449,49 @@ void ncp_joining_DBG_stop_result(zb_uint8_t stop_id, zb_uint32_t stop_tsn)
    }
 }
 
+static void ncp_joining_DBG_fill_resp_hdr_show(void)
+{
+        if (ncp_DBG_fill_resp_hdr_tsn != 0xFFFFFFFFuL)
+        {
+           zb_uint32_t tsn = ncp_DBG_fill_resp_hdr_tsn;
+           zb_uint32_t body_size = ncp_DBG_fill_resp_hdr_siz;
+           zb_uint32_t sta = ncp_DBG_fill_resp_hdr_st;
+           LOG_INF("ncp_DBG fill_resp_hdr - tsn %d status %d b_size %d", tsn, body_size, sta);
+           ncp_DBG_fill_resp_hdr_tsn = 0xFFFFFFFFuL;
+        }
+}
+
+static void ncp_joining_DBG_fill_register_req_show(void)
+{
+        if (ncp_DBG_register_req_tsn != 0xFFFFFFFFuL)
+        {
+           zb_uint32_t tsn = ncp_DBG_register_req_tsn;
+           const char * info_txt = ncp_DBG_register_req_txt;
+           LOG_INF("ncp_DBG register_request - tsn %d info %s", tsn, info_txt);
+           ncp_DBG_register_req_tsn = 0xFFFFFFFFuL;
+        }
+}
+
+static void ncp_joining_DBG_send_packet_fail_show(void)
+{
+        if (ncp_DBG_send_packet_fail != 0xFFFFFFFFuL)
+        {
+           zb_uint32_t fail_id = ncp_DBG_send_packet_fail;
+           LOG_INF("ncp_DBG send_packet_fail - id %d", fail_id);
+           ncp_DBG_send_packet_fail = 0xFFFFFFFFuL;
+        }
+}
+
+static void ncp_joining_DBG_cmd_stopped_show(void)
+{
+        if (ncp_DBG_cmd_stopped != 0xFFFFFFFFuL)
+        {
+           zb_uint32_t stop_id = ncp_DBG_cmd_stopped;
+           LOG_INF("ncp_DBG stop_id  %d", stop_id);
+           ncp_DBG_cmd_stopped = 0xFFFFFFFFuL;
+        }
+}
+
 
 int main(void)
 {
@@ -440,7 +505,7 @@ int main(void)
     ncp_DBG_mode_nondef_id    = 0xFFFFFFFFuL;
     ncp_DBG_illeg_req_pkttype = 0xFFFFFFFFuL;
     ncp_DBG_send_pkt_data     = (const void *)0;
-    ncp_DBG_cmd_stopped = 0xFFFFFFFFuL;    
+    ncp_DBG_cmd_stopped = 0xFFFFFFFFuL;
     for (n_seq = 0; n_seq < 8; n_seq ++)
     {
         ncp_DBG_cmd_stop_seq[n_seq]       = 0xFFFF;
@@ -505,7 +570,7 @@ int main(void)
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
 	
-	LOG_INF("ncp_DBG extra logs 10v enabled");
+	LOG_INF("ncp_DBG extra logs 11v enabled");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
@@ -515,41 +580,25 @@ int main(void)
 	while (1) {
         k_sleep(K_MSEC(200));
 
-        if (ncp_DBG_fill_resp_hdr_tsn != 0xFFFFFFFFuL)
-        {
-           zb_uint32_t tsn = ncp_DBG_fill_resp_hdr_tsn;
-           zb_uint32_t body_size = ncp_DBG_fill_resp_hdr_siz;
-           zb_uint32_t sta = ncp_DBG_fill_resp_hdr_st;
-           LOG_INF("ncp_DBG fill_resp_hdr - tsn %d status %d b_size %d", tsn, body_size, sta);
-           ncp_DBG_fill_resp_hdr_tsn = 0xFFFFFFFFuL;
-        }
-
-        if (ncp_DBG_register_req_tsn != 0xFFFFFFFFuL)
-        {
-           zb_uint32_t tsn = ncp_DBG_register_req_tsn;
-           const char * info_txt = ncp_DBG_register_req_txt;
-           LOG_INF("ncp_DBG register_request - tsn %d info %s", tsn, info_txt);
-           ncp_DBG_register_req_tsn = 0xFFFFFFFFuL;
-        }
-
-        if (ncp_DBG_send_packet_fail != 0xFFFFFFFFuL)
-        {
-           zb_uint32_t fail_id = ncp_DBG_send_packet_fail;
-           LOG_INF("ncp_DBG send_packet_fail - id %d", fail_id);
-           ncp_DBG_send_packet_fail = 0xFFFFFFFFuL;
-        }
-
-        if (ncp_DBG_cmd_stopped != 0xFFFFFFFFuL)
-        {
-           zb_uint32_t stop_id = ncp_DBG_cmd_stopped;
-           LOG_INF("ncp_DBG stop_id  %d", stop_id);
-           ncp_DBG_cmd_stopped = 0xFFFFFFFFuL;
-        }
+        ncp_joining_DBG_fill_register_req_show();
+        ncp_joining_DBG_fill_resp_hdr_show();
+        ncp_joining_DBG_send_packet_fail_show();
+        ncp_joining_DBG_cmd_stopped_show();
 
         ncp_joining_DBG_mode_nondf_show();
         ncp_joining_DBG_illegal_req_show();
         ncp_joining_DBG_send_packet_show();
         ncp_joining_DBG_send_later_show();
+        
+        if (ncp_DBG_cmd_start_stop_show > 0)
+        {
+            zb_uint8_t cnt = (ncp_DBG_cmd_start_stop_show - 1);
+            ncp_DBG_cmd_start_stop_show = cnt;
+            if (cnt == 0)
+            {
+                ncp_joining_DBG_show_start_stop();
+            }
+        }
 	}
 
 	return 0;
@@ -560,6 +609,7 @@ void ncp_joining_DBG_fill_resp_hdr(zb_uint8_t tsnv, zb_ret_t st, zb_uint_t body_
     ncp_DBG_fill_resp_hdr_st    = st;
     ncp_DBG_fill_resp_hdr_siz   = body_siz;
     ncp_DBG_fill_resp_hdr_tsn   = tsnv; // init 0xFFFFFFFFuL
+    ncp_DBG_cmd_start_stop_show = 2;
 }
 
 void ncp_joining_DBG_register_request(zb_uint8_t tsnv, const char * info_txt)
