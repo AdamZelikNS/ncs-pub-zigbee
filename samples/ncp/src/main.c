@@ -190,8 +190,8 @@ zb_uint32_t volatile ncp_DBG_cmd_permit_joing_bufid;
 zb_uint32_t volatile ncp_DBG_cmd_permit_joing_cb;
 zb_uint16_t volatile ncp_DBG_cmd_permit_joing_is_joind;
 
-zb_uint16_t volatile ncp_DBG_cmd_permit_sch_id[2];
-zb_uint32_t volatile ncp_DBG_cmd_permit_joing_tsn[2];
+zb_uint16_t volatile ncp_DBG_cmd_permit_sch_id[8];
+zb_uint32_t volatile ncp_DBG_cmd_permit_joing_tsn[8];
 
 void ncp_joining_DBG_req_cli_0c(zb_uint32_t pj_bufid, const void * pj_cb, zb_bool_t is_joined)
 {
@@ -203,7 +203,7 @@ void ncp_joining_DBG_req_cli_0c(zb_uint32_t pj_bufid, const void * pj_cb, zb_boo
 void ncp_joining_DBG_req_cli_1c(zb_uint8_t schedule_id, zb_uint32_t req_tsn)
 {
   zb_uint8_t n;
-  for (n = 0; n < 2; n ++)
+  for (n = 0; n < 8; n ++)
   {
     if (ncp_DBG_cmd_permit_sch_id[n] == 0xFFFFuL)
     {
@@ -230,6 +230,16 @@ static void ncp_joining_DBG_show_start_stop(void)
          v32a = ncp_DBG_cmd_address_pib[n];
          v32b = ncp_DBG_cmd_address_req[n];
          LOG_ERR("ncp_DBG req_addr pib %d req %d", v32a, v32b);
+      }
+    }
+    
+    for (n = 0; n < 8; n ++)
+    {
+      v32a = ncp_DBG_cmd_permit_sch_id[n];
+      v32b = ncp_DBG_cmd_permit_joing_tsn[n];
+      if (v32a != 0x0000FFFFuL)
+      {
+         LOG_ERR("ncp_DBG permit_joing schedule[%d] %d tsn %d", n, v32a, v32b);
       }
     }
 
@@ -518,14 +528,12 @@ int main(void)
         ncp_DBG_cmd_startd_callid[n_seq]  = 0xFFFFFFFFuL;
         ncp_DBG_cmd_address_pib[n_seq]    = 0xFFFFFFFFuL;
         ncp_DBG_cmd_address_req[n_seq]    = 0xFFFFFFFFuL;
+        ncp_DBG_cmd_permit_sch_id[n_seq ] = 0xFFFFu;
+        ncp_DBG_cmd_permit_joing_tsn[n_seq] = 0xFFFFFFFFuL;
     }
     ncp_DBG_cmd_permit_joing_bufid    = 0xFFFFFFFFuL;
     ncp_DBG_cmd_permit_joing_cb       = 0xFFFFFFFFuL;
     ncp_DBG_cmd_permit_joing_is_joind = 0xFFFFu;
-    ncp_DBG_cmd_permit_sch_id[0] = 0xFFFFu;
-    ncp_DBG_cmd_permit_joing_tsn[0] = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_permit_sch_id[1] = 0xFFFFu;
-    ncp_DBG_cmd_permit_joing_tsn[1] = 0xFFFFFFFFuL;
 
 #ifdef CONFIG_USB_DEVICE_STACK
 	/* Enable USB device. */
@@ -574,7 +582,7 @@ int main(void)
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
 	
-	LOG_INF("ncp_DBG extra logs 12v enabled");
+	LOG_INF("ncp_DBG extra logs 13v enabled");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
