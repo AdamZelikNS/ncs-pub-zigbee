@@ -186,18 +186,26 @@ zb_uint16_t volatile ncp_DBG_cmd_stop_seq[8];
 zb_uint16_t volatile ncp_DBG_cmd_stop_tsn[8];
 zb_uint32_t volatile ncp_DBG_cmd_address_pib[8];
 zb_uint32_t volatile ncp_DBG_cmd_address_req[8];
-zb_uint32_t volatile ncp_DBG_cmd_permit_joing_bufid;
-zb_uint32_t volatile ncp_DBG_cmd_permit_joing_cb;
-zb_uint16_t volatile ncp_DBG_cmd_permit_joing_is_joind;
+zb_uint32_t volatile ncp_DBG_cmd_permit_joing_bufid[8];
+zb_uint32_t volatile ncp_DBG_cmd_permit_joing_cb[8];
+zb_uint16_t volatile ncp_DBG_cmd_permit_joing_is_joind[8];
 
 zb_uint16_t volatile ncp_DBG_cmd_permit_sch_id[8];
 zb_uint32_t volatile ncp_DBG_cmd_permit_joing_tsn[8];
 
 void ncp_joining_DBG_req_cli_0c(zb_uint32_t pj_bufid, const void * pj_cb, zb_bool_t is_joined)
 {
-    ncp_DBG_cmd_permit_joing_bufid      = pj_bufid;
-    ncp_DBG_cmd_permit_joing_cb         = (zb_uint32_t)pj_cb;
-    ncp_DBG_cmd_permit_joing_is_joind   = (is_joined ? 1 : 0);
+  zb_uint8_t n;
+  for (n = 0; n < 8; n ++)
+  {
+    if (ncp_DBG_cmd_permit_joing_bufid[n] == 0xFFFFFFFFuL)
+    {
+        ncp_DBG_cmd_permit_joing_bufid[n]     = pj_bufid;
+        ncp_DBG_cmd_permit_joing_cb[n]        = (zb_uint32_t)pj_cb;
+        ncp_DBG_cmd_permit_joing_is_joind[n]  = (is_joined ? 1 : 0);
+        break;
+    }
+  }
 }
 
 void ncp_joining_DBG_req_cli_1c(zb_uint8_t schedule_id, zb_uint32_t req_tsn)
@@ -232,7 +240,7 @@ static void ncp_joining_DBG_show_start_stop(void)
          LOG_ERR("ncp_DBG req_addr pib %d req %d", v32a, v32b);
       }
     }
-    
+
     for (n = 0; n < 8; n ++)
     {
       v32a = ncp_DBG_cmd_permit_sch_id[n];
@@ -243,12 +251,15 @@ static void ncp_joining_DBG_show_start_stop(void)
       }
     }
 
-    v32a = ncp_DBG_cmd_permit_joing_bufid;
-    v32b = ncp_DBG_cmd_permit_joing_cb;
-    n    = ncp_DBG_cmd_permit_joing_is_joind;
-    if (v32a != 0xFFFFFFFFuL)
+    for (n = 0; n < 8; n ++)
     {
-         LOG_ERR("ncp_DBG permit_joing bufid %d cb %d is_joined %d", v32a, v32b, n);
+        zb_uint16_t is_jo = ncp_DBG_cmd_permit_joing_is_joind[n];
+        v32a = ncp_DBG_cmd_permit_joing_bufid[n];
+        v32b = ncp_DBG_cmd_permit_joing_cb[n];
+        if (v32a != 0xFFFFFFFFuL)
+        {
+             LOG_ERR("ncp_DBG permit_joing bufid %d cb %d is_joined %d", v32a, v32b, is_jo);
+        }
     }
 
     for (n = 0; n < 8; n ++)
@@ -530,10 +541,10 @@ int main(void)
         ncp_DBG_cmd_address_req[n_seq]    = 0xFFFFFFFFuL;
         ncp_DBG_cmd_permit_sch_id[n_seq ] = 0xFFFFu;
         ncp_DBG_cmd_permit_joing_tsn[n_seq] = 0xFFFFFFFFuL;
+        ncp_DBG_cmd_permit_joing_bufid[n_seq]     = 0xFFFFFFFFuL;
+        ncp_DBG_cmd_permit_joing_cb[n_seq]        = 0xFFFFFFFFuL;
+        ncp_DBG_cmd_permit_joing_is_joind[n_seq]  = 0xFFFFu;
     }
-    ncp_DBG_cmd_permit_joing_bufid    = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_permit_joing_cb       = 0xFFFFFFFFuL;
-    ncp_DBG_cmd_permit_joing_is_joind = 0xFFFFu;
 
 #ifdef CONFIG_USB_DEVICE_STACK
 	/* Enable USB device. */
@@ -582,7 +593,7 @@ int main(void)
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
 	
-	LOG_INF("ncp_DBG extra logs 13v enabled");
+	LOG_INF("ncp_DBG extra logs 14v enabled");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
@@ -601,7 +612,7 @@ int main(void)
         ncp_joining_DBG_illegal_req_show();
         ncp_joining_DBG_send_packet_show();
         ncp_joining_DBG_send_later_show();
-        
+
         if (ncp_DBG_cmd_start_stop_show > 0)
         {
             zb_uint8_t cnt = (ncp_DBG_cmd_start_stop_show - 1);
@@ -620,7 +631,7 @@ void ncp_joining_DBG_fill_resp_hdr(zb_uint8_t tsnv, zb_ret_t st, zb_uint_t body_
 {
     ncp_DBG_fill_resp_hdr_st    = st;
     ncp_DBG_fill_resp_hdr_siz   = body_siz;
-    ncp_DBG_fill_resp_hdr_tsn   = tsnv; // init 0xFFFFFFFFuL    
+    ncp_DBG_fill_resp_hdr_tsn   = tsnv; // init 0xFFFFFFFFuL
 }
 
 void ncp_joining_DBG_register_request(zb_uint8_t tsnv, const char * info_txt)
