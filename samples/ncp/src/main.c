@@ -324,7 +324,7 @@ void ncp_joining_DBG_mode_nondef(zb_uint16_t ctx_mode, zb_uint16_t call_cat, zb_
    ncp_DBG_mode_nondef_id   = ctx_mode;
    ncp_DBG_mode_nondef_cat  = call_cat;
    ncp_DBG_mode_nondef_len  = lengt;
-   ncp_DBG_cmd_start_stop_show += 2;
+   ncp_DBG_cmd_start_stop_show |= 2;
 }
 
 static void ncp_joining_DBG_mode_nondf_show(void)
@@ -348,7 +348,7 @@ void ncp_joining_DBG_illeg_req(zb_uint16_t pkt_typ, zb_uint16_t call_cat, zb_uin
    ncp_DBG_illeg_req_pkttype = pkt_typ;
    ncp_DBG_illeg_req_cat = call_cat;
    ncp_DBG_illeg_req_len = lengt;
-   ncp_DBG_cmd_start_stop_show += 2;
+   ncp_DBG_cmd_start_stop_show |= 2;
 }
 
 static void ncp_joining_DBG_illegal_req_show(void)
@@ -370,7 +370,7 @@ void ncp_joining_DBG_send_pkt(const void *p_data, zb_uint16_t tx_lengt)
 {
     ncp_DBG_send_pkt_data = p_data;
     ncp_DBG_send_pkt_len  = tx_lengt;
-    ncp_DBG_cmd_start_stop_show += 2;
+    ncp_DBG_cmd_start_stop_show |= 2;
 }
 
 static void ncp_joining_DBG_send_packet_show(void)
@@ -404,7 +404,7 @@ zb_uint32_t volatile  ncp_DBG_send_later_len;  // init 0xFFFFFFFFuL
 void ncp_joining_DBG_send_later(zb_uint16_t lengt)
 {
     ncp_DBG_send_later_len = lengt;
-    ncp_DBG_cmd_start_stop_show += 2;
+    ncp_DBG_cmd_start_stop_show |= 2;
 }
 
 static void ncp_joining_DBG_send_later_show(void)
@@ -462,6 +462,8 @@ zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
   {
      ncp_DBG_cmd_stopped = op_id;
   }
+  
+  ncp_DBG_cmd_start_stop_show |= 2;
 
   return ((n < nmax) ? n : 0xFFu);
 }
@@ -593,7 +595,7 @@ int main(void)
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
 	
-	LOG_INF("ncp_DBG extra logs 14v enabled");
+	LOG_INF("ncp_DBG extra logs 16v enabled");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
