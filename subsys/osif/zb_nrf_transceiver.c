@@ -621,4 +621,9 @@ static enum net_l2_flags zigbee_l2_flags(struct net_if *iface)
 	return 0;
 }
 
+void ncp_joining_DBG_assert_for_diag(int a_v)
+{
+    ZB_ASSERT(a_v);
+}
+
 NET_L2_INIT(ZIGBEE_L2, zigbee_l2_recv, NULL, NULL, zigbee_l2_flags);
