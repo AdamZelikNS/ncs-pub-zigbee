@@ -186,7 +186,7 @@ typedef void (*ncp_DBG_ev_pr_cb_t)(const struct ncp_DBG_event_s * e, zb_uint16_t
 typedef struct ncp_DBG_event_s {
 	zb_uint16_t volatile   st;
     ncp_DBG_ev_pr_cb_t     pr_cb;
-    zb_uint32_t            pz[7];
+    zb_uint32_t            pz[10];
 } ncp_DBG_event_t;
 
 #define ncp_DBG_ev_NUM (10 * 8)
@@ -289,14 +289,15 @@ static void ncp_joining_DBG_permit_joing_sch_pshow(const struct ncp_DBG_event_s 
 
 static void ncp_joining_DBG_cmd_started_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
 {
-    zb_uint32_t v32a, v32b;
+    zb_uint32_t v32a, v32b, idx;
     v32a = (e->pz[0]);
     v32b = (e->pz[1]);
     LOG_ERR("ncp_DBG ev[%d] started tsn %d call_id %d", ev_num, v32a, v32b);
 
     v32a = (e->pz[2]);
     v32b = (e->pz[3]);
-    LOG_ERR("ncp_DBG ev[%d] req_addr pib %d req %d", ev_num, v32a, v32b);
+    idx = (e->pz[5]);
+    LOG_ERR("ncp_DBG ev[%d] req_addr pib %d req %d", ev_num, v32a, v32b, idx);
 }
 
 static void ncp_joining_DBG_show_start_stop(void)
@@ -317,6 +318,8 @@ static void ncp_joining_DBG_show_start_stop(void)
       {
         p_ev->pr_cb(p_ev, n);
       }
+      p_ev ++;
+      n ++;
     } while (n < ncp_DBG_ev_NUM);
 
     LOG_ERR(" : END_list");
@@ -449,7 +452,7 @@ void ncp_joining_DBG_mode_nondef(zb_uint16_t ctx_mode, zb_uint16_t call_cat, zb_
    ncp_DBG_mode_nondef_id   = ctx_mode;
    ncp_DBG_mode_nondef_cat  = call_cat;
    ncp_DBG_mode_nondef_len  = lengt;
-   ncp_DBG_cmd_start_stop_show += 2;
+   ncp_DBG_cmd_start_stop_show |= 2;
 }
 
 static void ncp_joining_DBG_mode_nondf_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -495,7 +498,7 @@ void ncp_joining_DBG_illeg_req(zb_uint16_t pkt_typ, zb_uint16_t call_cat, zb_uin
    ncp_DBG_illeg_req_pkttype = pkt_typ;
    ncp_DBG_illeg_req_cat = call_cat;
    ncp_DBG_illeg_req_len = lengt;
-   ncp_DBG_cmd_start_stop_show += 2;
+   ncp_DBG_cmd_start_stop_show |= 2;
 }
 
 static void ncp_joining_DBG_illegal_req_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -539,7 +542,7 @@ void ncp_joining_DBG_send_pkt(const void *p_data, zb_uint16_t tx_lengt)
     ncp_DBG_send_pkt_data = p_data;
     ncp_DBG_send_pkt_len  = tx_lengt;
 #endif
-    ncp_DBG_cmd_start_stop_show += 2;
+    ncp_DBG_cmd_start_stop_show |= 2;
 }
 
 static void ncp_joining_DBG_send_packet_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -591,7 +594,7 @@ void ncp_joining_DBG_send_later(zb_uint16_t lengt)
 #elif 0
     ncp_DBG_send_later_len = lengt;
 #endif
-    ncp_DBG_cmd_start_stop_show += 2;
+    ncp_DBG_cmd_start_stop_show |= 2;
 }
 
 static void ncp_joining_DBG_send_later_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -615,16 +618,19 @@ zb_uint8_t ncp_joining_DBG_started(zb_uint32_t hdr_tsn, zb_uint32_t hdr_call_id)
 {
 #if 1
     ncp_DBG_event_t * e = (ncp_DBG_last ++);
+    zb_uint8_t idx;
 
     e->st = 2;
     e->pz[0] = hdr_tsn;
     e->pz[1] = hdr_call_id;
     e->pz[2] = 0xFFFFFFFFuL;
     e->pz[3] = 0xFFFFFFFFuL;
+    idx = (e - &(ncp_DBG_events[0])) / sizeof(*e);
+    e->pz[5] = idx; 
     e->pr_cb = ncp_joining_DBG_cmd_started_pshow;
     e->st = 1;
 
-    return (e - &(ncp_DBG_events[0])) / sizeof(*e);
+    return idx;
 
 #elif 0
   const zb_uint8_t nmax = 8;
@@ -672,6 +678,8 @@ zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
     e->st = 2;
     e->pz[0] = op_id;
     e->pz[1] = 0xFFFFFFFFuL;
+    idx = (e - &(ncp_DBG_events[0])) / sizeof(*e);
+    e->pz[5] = idx;
     e->pr_cb = ncp_joining_DBG_cmd_stopped_pshow;
     e->st = 1;
 
@@ -680,9 +688,9 @@ zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
        ncp_DBG_cmd_stopped = op_id;
     }
 
-    ncp_DBG_cmd_start_stop_show += 2;
+    ncp_DBG_cmd_start_stop_show |= 2;
 
-    return (e - &(ncp_DBG_events[0])) / sizeof(*e);
+    return idx;
 
 #elif 0
   const zb_uint8_t nmax = 8;
@@ -701,7 +709,7 @@ zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
      ncp_DBG_cmd_stopped = op_id;
   }
 
-  ncp_DBG_cmd_start_stop_show += 2;
+  ncp_DBG_cmd_start_stop_show |= 2;
 
   return ((n < nmax) ? n : 0xFFu);
 #endif
@@ -783,7 +791,8 @@ static void ncp_joining_DBG_cmd_stopped_pshow(const struct ncp_DBG_event_s * e, 
 {
    zb_uint32_t stop_id  = (e->pz[0]);
    zb_uint32_t stop_tsn = (e->pz[1]);
-   LOG_INF("ncp_DBG ev[%d] stop_id %d tsn %d", ev_num, stop_id, stop_tsn);
+   zb_uint32_t idx = (e->pz[5]);
+   LOG_INF("ncp_DBG ev[%d] stop_id %d tsn %d idx %d", ev_num, stop_id, stop_tsn, idx);
 }
 
 static void ncp_joining_DBG_cmd_stopped_show(void)
@@ -863,7 +872,7 @@ int main(void)
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
 	
-	LOG_INF("ncp_DBG extra logs 20v enabled");
+	LOG_INF("ncp_DBG extra logs 21v enabled");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
