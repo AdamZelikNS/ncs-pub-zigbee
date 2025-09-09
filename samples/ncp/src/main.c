@@ -193,6 +193,7 @@ typedef struct ncp_DBG_event_s {
 ncp_DBG_event_t ncp_DBG_events[ncp_DBG_ev_NUM];
 ncp_DBG_event_t * volatile ncp_DBG_last;
 
+
 static void ncp_joining_DBG_mode_nondf_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num);
 static void ncp_joining_DBG_cmd_started_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num);
 static void ncp_joining_DBG_permit_joing_buf_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num);
@@ -205,23 +206,29 @@ static void ncp_joining_DBG_fill_resp_hdr_pshow(const struct ncp_DBG_event_s * e
 static void ncp_joining_DBG_send_packet_fail_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num);
 static void ncp_joining_DBG_cmd_stopped_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num);
 
-zb_uint8_t  volatile ncp_DBG_cmd_start_stop_show = 0;
-//   zb_uint32_t volatile ncp_DBG_cmd_startd_tsn[8];
-//   zb_uint32_t volatile ncp_DBG_cmd_startd_callid[8];
-//   zb_uint16_t volatile ncp_DBG_cmd_stop_seq[8];
-//   zb_uint16_t volatile ncp_DBG_cmd_stop_tsn[8];
-//   zb_uint32_t volatile ncp_DBG_cmd_address_pib[8];
-//   zb_uint32_t volatile ncp_DBG_cmd_address_req[8];
-//   zb_uint32_t volatile ncp_DBG_cmd_permit_joing_bufid[8];
-//   zb_uint32_t volatile ncp_DBG_cmd_permit_joing_cb[8];
-//   zb_uint16_t volatile ncp_DBG_cmd_permit_joing_is_joind[8];
-//
-//   zb_uint16_t volatile ncp_DBG_cmd_permit_sch_id[8];
-//   zb_uint32_t volatile ncp_DBG_cmd_permit_joing_tsn[8];
+static void ncp_joining_DBG_show_start_stop(zb_uint8_t trigg_id);
+
+zb_uint8_t volatile ncp_DBG_show_sch_done = 0;
+
+static void ncp_DBG_show_sched(void)     
+{
+    if (ncp_DBG_show_sch_done == 0)
+    {
+    	ZB_SCHEDULE_APP_ALARM(ncp_joining_DBG_show_start_stop,
+                              (zb_uint8_t)2,
+    						  (ZB_TIME_ONE_SECOND * 2));
+        ncp_DBG_show_sch_done = 1;
+    }
+
+//     extern void ncp_joining_DBG_assert_for_diag(int a_v);
+//     ncp_joining_DBG_assert_for_diag(0);
+//     ncp_DBG_cmd_start_stop_show = 0;
+//     ncp_joining_DBG_show_start_stop(?);
+//     ncp_DBG_cmd_start_stop_show = 0;
+}
 
 void ncp_joining_DBG_req_cli_0c(zb_uint32_t pj_bufid, const void * pj_cb, zb_bool_t is_joined)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
 
     e->st = 2;
@@ -230,20 +237,6 @@ void ncp_joining_DBG_req_cli_0c(zb_uint32_t pj_bufid, const void * pj_cb, zb_boo
     e->pz[2] = (is_joined ? ((zb_uint32_t)1) : (zb_uint32_t)0);
     e->pr_cb = ncp_joining_DBG_permit_joing_buf_pshow;
     e->st = 1;
-
-#elif 0
-  zb_uint8_t n;
-  for (n = 0; n < 8; n ++)
-  {
-    if (ncp_DBG_cmd_permit_joing_bufid[n] == 0xFFFFFFFFuL)
-    {
-        ncp_DBG_cmd_permit_joing_bufid[n]     = pj_bufid;
-        ncp_DBG_cmd_permit_joing_cb[n]        = (zb_uint32_t)pj_cb;
-        ncp_DBG_cmd_permit_joing_is_joind[n]  = (is_joined ? 1 : 0);
-        break;
-    }
-  }
-#endif
 }
 
 static void ncp_joining_DBG_permit_joing_buf_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -256,7 +249,6 @@ static void ncp_joining_DBG_permit_joing_buf_pshow(const struct ncp_DBG_event_s 
 
 void ncp_joining_DBG_req_cli_1c(zb_uint8_t schedule_id, zb_uint32_t req_tsn)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
 
     e->st = 2;
@@ -264,19 +256,6 @@ void ncp_joining_DBG_req_cli_1c(zb_uint8_t schedule_id, zb_uint32_t req_tsn)
     e->pz[1] = req_tsn;
     e->pr_cb = ncp_joining_DBG_permit_joing_sch_pshow;
     e->st = 1;
-
-#elif 0
-  zb_uint8_t n;
-  for (n = 0; n < 8; n ++)
-  {
-    if (ncp_DBG_cmd_permit_sch_id[n] == 0xFFFFuL)
-    {
-        ncp_DBG_cmd_permit_sch_id[n]    = schedule_id;
-        ncp_DBG_cmd_permit_joing_tsn[n] = req_tsn;
-        break;
-    }
-  }
-#endif
 }
 
 static void ncp_joining_DBG_permit_joing_sch_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -300,13 +279,12 @@ static void ncp_joining_DBG_cmd_started_pshow(const struct ncp_DBG_event_s * e, 
     LOG_ERR("ncp_DBG ev[%d] req_addr pib %d req %d idx %d", ev_num, v32a, v32b, idx);
 }
 
-static void ncp_joining_DBG_show_start_stop(void)
+static void ncp_joining_DBG_show_start_stop(zb_uint8_t trigg_id)
 {
-#if 1
     ncp_DBG_event_t * p_ev = &(ncp_DBG_events[0]);
     zb_uint16_t n = 0;
 
-    LOG_ERR("ncp_DBG events_list: ");
+    LOG_ERR("trigg %d  ncp_DBG events_list: ", (zb_uint16_t)trigg_id);
 
     do {
       zb_uint16_t ev_st = (p_ev->st);
@@ -323,78 +301,11 @@ static void ncp_joining_DBG_show_start_stop(void)
     } while (n < ncp_DBG_ev_NUM);
 
     LOG_ERR(" : END_list");
-
-#elif 0
-    zb_uint32_t v32a, v32b;
-    zb_uint16_t n;
-
-    for (n = 0; n < 8; n ++)
-    {
-      v32a = ncp_DBG_cmd_startd_tsn[n];
-      v32b = ncp_DBG_cmd_startd_callid[n];
-      if (v32a != 0xFFFFFFFFuL)
-      {
-         LOG_ERR("ncp_DBG started[%d] tsn %d call_id %d", n, v32a, v32b);
-
-         v32a = ncp_DBG_cmd_address_pib[n];
-         v32b = ncp_DBG_cmd_address_req[n];
-         LOG_ERR("ncp_DBG req_addr pib %d req %d", v32a, v32b);
-      }
-    }
-
-    for (n = 0; n < 8; n ++)
-    {
-      v32a = ncp_DBG_cmd_permit_sch_id[n];
-      v32b = ncp_DBG_cmd_permit_joing_tsn[n];
-      if (v32a != 0x0000FFFFuL)
-      {
-         LOG_ERR("ncp_DBG permit_joing schedule[%d] %d tsn %d", n, v32a, v32b);
-      }
-    }
-
-    for (n = 0; n < 8; n ++)
-    {
-        zb_uint16_t is_jo = ncp_DBG_cmd_permit_joing_is_joind[n];
-        v32a = ncp_DBG_cmd_permit_joing_bufid[n];
-        v32b = ncp_DBG_cmd_permit_joing_cb[n];
-        if (v32a != 0xFFFFFFFFuL)
-        {
-             LOG_ERR("ncp_DBG permit_joing bufid %d cb %d is_joined %d", v32a, v32b, is_jo);
-        }
-    }
-
-    for (n = 0; n < 8; n ++)
-    {
-      zb_uint16_t cmd_stop_id = ncp_DBG_cmd_stop_seq[n];
-      if (cmd_stop_id != 0xFFFFuL)
-      {
-        zb_uint16_t tsn = ncp_DBG_cmd_stop_tsn[n];
-        LOG_ERR("ncp_DBG stop[%d] : %d tsn %d", n, cmd_stop_id, tsn);
-      }
-    }
-#endif
 }
-
-static void ncp_joining_DBG_mode_nondf_show(void);
-static void ncp_joining_DBG_illegal_req_show(void);
-static void ncp_joining_DBG_send_packet_show(void);
-static void ncp_joining_DBG_send_later_show(void);
-static void ncp_joining_DBG_fill_register_req_show(void);
-static void ncp_joining_DBG_fill_resp_hdr_show(void);
-static void ncp_joining_DBG_send_packet_fail_show(void);
-static void ncp_joining_DBG_cmd_stopped_show(void);
 
 void zb_dbg0_assert2b(zb_uint16_t fi_id, zb_int_t line_nm)
 {
-    ncp_joining_DBG_show_start_stop();
-    ncp_joining_DBG_fill_register_req_show();
-    ncp_joining_DBG_fill_resp_hdr_show();
-    ncp_joining_DBG_send_packet_fail_show();
-    ncp_joining_DBG_cmd_stopped_show();
-    ncp_joining_DBG_mode_nondf_show();
-    ncp_joining_DBG_illegal_req_show();
-    ncp_joining_DBG_send_packet_show();
-    ncp_joining_DBG_send_later_show();
+    ncp_joining_DBG_show_start_stop(1);
     LOG_ERR("ZBOSS Assert file_id %d line %d", fi_id, line_nm);
 }
 
@@ -414,17 +325,12 @@ zb_uint32_t volatile  ncp_DBG_send_packet_fail;  // init 0xFFFFFFFFuL
 
 void ncp_joining_DBG_send_packet_failed(zb_uint16_t cId)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
 
     e->st = 2;
     e->pz[0] = cId;
     e->pr_cb = ncp_joining_DBG_send_packet_fail_pshow;
     e->st = 1;
-
-#elif 0
-   /* - */
-#endif
 
     ncp_DBG_send_packet_fail = cId;
 }
@@ -435,7 +341,6 @@ zb_uint16_t volatile  ncp_DBG_mode_nondef_len;
 
 void ncp_joining_DBG_mode_nondef(zb_uint16_t ctx_mode, zb_uint16_t call_cat, zb_uint16_t lengt)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
 
     e->st = 2;
@@ -445,15 +350,11 @@ void ncp_joining_DBG_mode_nondef(zb_uint16_t ctx_mode, zb_uint16_t call_cat, zb_
     e->pr_cb = ncp_joining_DBG_mode_nondf_pshow;
     e->st = 1;
 
-#elif 0
-   /* - */
-#endif
-
    ncp_DBG_mode_nondef_id   = ctx_mode;
    ncp_DBG_mode_nondef_cat  = call_cat;
    ncp_DBG_mode_nondef_len  = lengt;
-   if (ncp_DBG_cmd_start_stop_show == 0)
-      ncp_DBG_cmd_start_stop_show = 2;
+
+   ncp_DBG_show_sched();
 }
 
 static void ncp_joining_DBG_mode_nondf_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -464,25 +365,12 @@ static void ncp_joining_DBG_mode_nondf_pshow(const struct ncp_DBG_event_s * e, z
    LOG_INF("ncp_DBG ev[%d] mode_nondef - id %d cat %d len %d", ev_num, fail_id, cat, len);
 }
 
-static void ncp_joining_DBG_mode_nondf_show(void)
-{
-    if (ncp_DBG_mode_nondef_id != 0xFFFFFFFFuL)
-    {
-       zb_uint32_t fail_id = ncp_DBG_mode_nondef_id;
-       zb_uint16_t cat = ncp_DBG_mode_nondef_cat;
-       zb_uint16_t len = ncp_DBG_mode_nondef_len;
-       LOG_INF("ncp_DBG mode_nondef - id %d cat %d len %d", fail_id, cat, len);
-       ncp_DBG_mode_nondef_id = 0xFFFFFFFFuL;
-    }
-}
-
 zb_uint32_t volatile  ncp_DBG_illeg_req_pkttype;  // init 0xFFFFFFFFuL
 zb_uint16_t volatile  ncp_DBG_illeg_req_cat;
 zb_uint16_t volatile  ncp_DBG_illeg_req_len;
 
 void ncp_joining_DBG_illeg_req(zb_uint16_t pkt_typ, zb_uint16_t call_cat, zb_uint16_t lengt)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
 
     e->st = 2;
@@ -492,15 +380,11 @@ void ncp_joining_DBG_illeg_req(zb_uint16_t pkt_typ, zb_uint16_t call_cat, zb_uin
     e->pr_cb = ncp_joining_DBG_illegal_req_pshow;
     e->st = 1;
 
-#elif 0
-   /* - */
-#endif
-
    ncp_DBG_illeg_req_pkttype = pkt_typ;
    ncp_DBG_illeg_req_cat = call_cat;
    ncp_DBG_illeg_req_len = lengt;
-   if (ncp_DBG_cmd_start_stop_show == 0)
-      ncp_DBG_cmd_start_stop_show = 2;
+
+   ncp_DBG_show_sched();
 }
 
 static void ncp_joining_DBG_illegal_req_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -511,24 +395,11 @@ static void ncp_joining_DBG_illegal_req_pshow(const struct ncp_DBG_event_s * e, 
    LOG_INF("ncp_DBG ev[%d] illegal_req - pkt_type %d cat %d len %d", ev_num, pkt_type, cat, len);
 }
 
-static void ncp_joining_DBG_illegal_req_show(void)
-{
-    if (ncp_DBG_illeg_req_pkttype != 0xFFFFFFFFuL)
-    {
-       zb_uint32_t pkt_type = ncp_DBG_illeg_req_pkttype;
-       zb_uint16_t cat = ncp_DBG_illeg_req_cat;
-       zb_uint16_t len = ncp_DBG_illeg_req_len;
-       LOG_INF("ncp_DBG illegal_req - pkt_type %d cat %d len %d", pkt_type, cat, len);
-       ncp_DBG_illeg_req_pkttype = 0xFFFFFFFFuL;
-    }
-}
-
 const void * volatile  ncp_DBG_send_pkt_data;  // init 0
 zb_uint16_t volatile   ncp_DBG_send_pkt_len;
 
 void ncp_joining_DBG_send_pkt(const void *p_data, zb_uint16_t tx_lengt)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
 
     e->st = 2;
@@ -540,12 +411,7 @@ void ncp_joining_DBG_send_pkt(const void *p_data, zb_uint16_t tx_lengt)
     ncp_DBG_send_pkt_data = p_data;
     ncp_DBG_send_pkt_len  = tx_lengt;
 
-#elif 0
-    ncp_DBG_send_pkt_data = p_data;
-    ncp_DBG_send_pkt_len  = tx_lengt;
-#endif
-   if (ncp_DBG_cmd_start_stop_show == 0)
-      ncp_DBG_cmd_start_stop_show = 2;
+    ncp_DBG_show_sched();
 }
 
 static void ncp_joining_DBG_send_packet_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -556,37 +422,10 @@ static void ncp_joining_DBG_send_packet_pshow(const struct ncp_DBG_event_s * e, 
     LOG_INF("ncp_DBG ev[%d] send_packet - len %d d:%08x", ev_num, len, sbuf);
 }
 
-static void ncp_joining_DBG_send_packet_show(void)
-{
-    static char sbuf[256];
-
-    if (ncp_DBG_send_pkt_data != (const void *)0)
-    {
-       zb_uint16_t len = ncp_DBG_mode_nondef_len;
-       unsigned char const * const p_d =
-         (unsigned char const *)ncp_DBG_send_pkt_data;
-
-       char * p_b = &(sbuf[0]);
-       for (uint8_t j = 0; j <= len; j++)
-       {
-           int ch_added = sprintf(p_b, "%02x ", ((int)(p_d[j])));
-           p_b += ch_added;
-           if (p_b > &(sbuf[sizeof(sbuf)-4]))
-           {
-             (*p_b) = 0;
-             break;
-           }
-       }
-       LOG_INF("ncp_DBG send_packet - len %d d:%s", len, sbuf);
-       ncp_DBG_send_pkt_data = (const void *)0;
-    }
-}
-
 zb_uint32_t volatile  ncp_DBG_send_later_len;  // init 0xFFFFFFFFuL
 
 void ncp_joining_DBG_send_later(zb_uint16_t lengt)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
 
     e->st = 2;
@@ -594,11 +433,7 @@ void ncp_joining_DBG_send_later(zb_uint16_t lengt)
     e->pr_cb = ncp_joining_DBG_send_later_pshow;
     e->st = 1;
 
-#elif 0
-    ncp_DBG_send_later_len = lengt;
-#endif
-   if (ncp_DBG_cmd_start_stop_show == 0)
-      ncp_DBG_cmd_start_stop_show = 2;
+    ncp_DBG_show_sched();
 }
 
 static void ncp_joining_DBG_send_later_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -608,19 +443,8 @@ static void ncp_joining_DBG_send_later_pshow(const struct ncp_DBG_event_s * e, z
     LOG_INF("ncp_DBG ev[%d] send_later - len %d", ev_num, len);
 }
 
-static void ncp_joining_DBG_send_later_show(void)
-{
-    if (ncp_DBG_send_later_len != 0xFFFFFFFFuL)
-    {
-       zb_uint16_t len = ncp_DBG_send_later_len;
-       LOG_INF("ncp_DBG send_later - len %d", len);
-       ncp_DBG_send_later_len = 0xFFFFFFFFuL;
-    }
-}
-
 zb_uint8_t ncp_joining_DBG_started(zb_uint32_t hdr_tsn, zb_uint32_t hdr_call_id)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
     zb_uint8_t idx;
 
@@ -635,48 +459,22 @@ zb_uint8_t ncp_joining_DBG_started(zb_uint32_t hdr_tsn, zb_uint32_t hdr_call_id)
     e->st = 1;
 
     return idx;
-
-#elif 0
-  const zb_uint8_t nmax = 8;
-  zb_uint8_t n;
-  for (n = 0; n < nmax; n ++)
-  {
-    if (ncp_DBG_cmd_startd_tsn[n] == 0xFFFFFFFFuL)
-    {
-      ncp_DBG_cmd_startd_tsn[n]     = hdr_tsn;
-      ncp_DBG_cmd_startd_callid[n]  = hdr_call_id;
-      break;
-    }
-  }
-
-  return ((n < nmax) ? n : 0xFFu);
-#endif
 }
 
 void ncp_joining_DBG_short_ad(zb_uint8_t start_id, zb_uint32_t addr_pib, zb_uint32_t addr_req)
 {
-#if 1
     if (start_id < ncp_DBG_ev_NUM)
     {
         ncp_DBG_event_t volatile * e = &(ncp_DBG_events[start_id]);
         e->pz[2] = addr_pib;
         e->pz[3] = addr_req;
     }
-
-#elif 0
-   if (start_id < 0xFFu)
-   {
-     ncp_DBG_cmd_address_pib[start_id] = addr_pib;
-     ncp_DBG_cmd_address_req[start_id] = addr_req;
-   }
-#endif
 }
 
 zb_uint32_t volatile ncp_DBG_cmd_stopped;  // init 0xFFFFFFFFuL
 
 zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
     zb_uint8_t idx;
 
@@ -693,55 +491,19 @@ zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
        ncp_DBG_cmd_stopped = op_id;
     }
 
-    if (ncp_DBG_cmd_start_stop_show == 0)
-    {
-      ncp_DBG_cmd_start_stop_show = 2;
-    }
+    ncp_DBG_show_sched();
 
     return idx;
-
-#elif 0
-  const zb_uint8_t nmax = 8;
-  zb_uint8_t n;
-  for (n = 0; n < nmax; n ++)
-  {
-    if (ncp_DBG_cmd_stop_seq[n] == 0xFFFFuL)
-    {
-        ncp_DBG_cmd_stop_seq[n] = op_id;
-        break;
-    }
-  }
-
-  if (ncp_DBG_cmd_stopped == 0xFFFFFFFFuL)
-  {
-     ncp_DBG_cmd_stopped = op_id;
-  }
-
-  if (ncp_DBG_cmd_start_stop_show == 0)
-  {
-    ncp_DBG_cmd_start_stop_show = 2;
-  }
-
-  return ((n < nmax) ? n : 0xFFu);
-#endif
 }
 
 void ncp_joining_DBG_stop_result(zb_uint8_t stop_id, zb_uint32_t stop_tsn)
 {
-#if 1
     if (stop_id < ncp_DBG_ev_NUM)
     {
         ncp_DBG_event_t volatile * e = &(ncp_DBG_events[stop_id]);
         e->pz[1] = stop_tsn;
 
     }
-
-#elif 0
-   if (stop_id < 0xFFu)
-   {
-      ncp_DBG_cmd_stop_tsn[stop_id] = stop_tsn;
-   }
-#endif
 }
 
 static void ncp_joining_DBG_fill_resp_hdr_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -752,18 +514,6 @@ static void ncp_joining_DBG_fill_resp_hdr_pshow(const struct ncp_DBG_event_s * e
    LOG_INF("ncp_DBG ev[%d] fill_resp_hdr - tsn %d status %d b_size %d", ev_num, tsn, sta, body_size);
 }
 
-static void ncp_joining_DBG_fill_resp_hdr_show(void)
-{
-        if (ncp_DBG_fill_resp_hdr_tsn != 0xFFFFFFFFuL)
-        {
-           zb_uint32_t tsn = ncp_DBG_fill_resp_hdr_tsn;
-           zb_uint32_t body_size = ncp_DBG_fill_resp_hdr_siz;
-           zb_uint32_t sta = ncp_DBG_fill_resp_hdr_st;
-           LOG_INF("ncp_DBG fill_resp_hdr - tsn %d status %d b_size %d", tsn, sta, body_size);
-           ncp_DBG_fill_resp_hdr_tsn = 0xFFFFFFFFuL;
-        }
-}
-
 static void ncp_joining_DBG_fill_register_req_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
 {
    const char * info_txt = (const char *)(e->pz[0]);
@@ -771,31 +521,10 @@ static void ncp_joining_DBG_fill_register_req_pshow(const struct ncp_DBG_event_s
    LOG_INF("ncp_DBG ev[%d] register_request - tsn %d info %s", ev_num, tsn, info_txt);
 }
 
-static void ncp_joining_DBG_fill_register_req_show(void)
-{
-        if (ncp_DBG_register_req_tsn != 0xFFFFFFFFuL)
-        {
-           zb_uint32_t tsn = ncp_DBG_register_req_tsn;
-           const char * info_txt = ncp_DBG_register_req_txt;
-           LOG_INF("ncp_DBG register_request - tsn %d info %s", tsn, info_txt);
-           ncp_DBG_register_req_tsn = 0xFFFFFFFFuL;
-        }
-}
-
 static void ncp_joining_DBG_send_packet_fail_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
 {
    zb_uint32_t fail_id = (e->pz[0]);
    LOG_INF("ncp_DBG ev[%d] send_packet_fail - id %d", ev_num, fail_id);
-}
-
-static void ncp_joining_DBG_send_packet_fail_show(void)
-{
-        if (ncp_DBG_send_packet_fail != 0xFFFFFFFFuL)
-        {
-           zb_uint32_t fail_id = ncp_DBG_send_packet_fail;
-           LOG_INF("ncp_DBG send_packet_fail - id %d", fail_id);
-           ncp_DBG_send_packet_fail = 0xFFFFFFFFuL;
-        }
 }
 
 static void ncp_joining_DBG_cmd_stopped_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
@@ -805,17 +534,6 @@ static void ncp_joining_DBG_cmd_stopped_pshow(const struct ncp_DBG_event_s * e, 
    zb_uint32_t idx = (e->pz[5]);
    LOG_INF("ncp_DBG ev[%d] stop_id %d tsn %d idx %d", ev_num, stop_id, stop_tsn, idx);
 }
-
-static void ncp_joining_DBG_cmd_stopped_show(void)
-{
-        if (ncp_DBG_cmd_stopped != 0xFFFFFFFFuL)
-        {
-           zb_uint32_t stop_id = ncp_DBG_cmd_stopped;
-           LOG_INF("ncp_DBG stop_id  %d", stop_id);
-           ncp_DBG_cmd_stopped = 0xFFFFFFFFuL;
-        }
-}
-
 
 int main(void)
 {
@@ -883,7 +601,7 @@ int main(void)
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
 	
-	LOG_INF("ncp_DBG extra logs 23v enabled");
+	LOG_INF("ncp_DBG extra logs 24v enabled");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
@@ -892,29 +610,6 @@ int main(void)
 
 	while (1) {
         k_sleep(K_MSEC(200));
-
-        ncp_joining_DBG_fill_register_req_show();
-        ncp_joining_DBG_fill_resp_hdr_show();
-        ncp_joining_DBG_send_packet_fail_show();
-        ncp_joining_DBG_cmd_stopped_show();
-
-        ncp_joining_DBG_mode_nondf_show();
-        ncp_joining_DBG_illegal_req_show();
-        ncp_joining_DBG_send_packet_show();
-        ncp_joining_DBG_send_later_show();
-
-        if (ncp_DBG_cmd_start_stop_show > 1)
-        {
-            ncp_DBG_cmd_start_stop_show -= 1;
-        }
-        else if (ncp_DBG_cmd_start_stop_show == 1)
-        {
-            extern void ncp_joining_DBG_assert_for_diag(int a_v);
-            ncp_joining_DBG_assert_for_diag(0);
-            ncp_DBG_cmd_start_stop_show = 0;
-            ncp_joining_DBG_show_start_stop();
-            ncp_DBG_cmd_start_stop_show = 0;
-        }
 	}
 
 	return 0;
@@ -922,7 +617,6 @@ int main(void)
 
 void ncp_joining_DBG_fill_resp_hdr(zb_uint8_t tsnv, zb_ret_t st, zb_uint_t body_siz)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
 
     e->st = 2;
@@ -931,18 +625,16 @@ void ncp_joining_DBG_fill_resp_hdr(zb_uint8_t tsnv, zb_ret_t st, zb_uint_t body_
     e->pz[2] = body_siz;
     e->pr_cb = ncp_joining_DBG_fill_resp_hdr_pshow;
     e->st = 1;
-#elif 0
-    /* - */
-#endif
 
     ncp_DBG_fill_resp_hdr_st    = st;
     ncp_DBG_fill_resp_hdr_siz   = body_siz;
     ncp_DBG_fill_resp_hdr_tsn   = tsnv; // init 0xFFFFFFFFuL
+    
+    ncp_DBG_show_sched();
 }
 
 void ncp_joining_DBG_register_request(zb_uint8_t tsnv, const char * info_txt)
 {
-#if 1
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
 
     e->st = 2;
@@ -950,9 +642,6 @@ void ncp_joining_DBG_register_request(zb_uint8_t tsnv, const char * info_txt)
     e->pz[1] = tsnv;
     e->pr_cb = ncp_joining_DBG_fill_register_req_pshow;
     e->st = 1;
-#elif 0
-    /* - */
-#endif
 
     ncp_DBG_register_req_txt = info_txt;
     ncp_DBG_register_req_tsn = tsnv;  // init 0xFFFFFFFFuL
