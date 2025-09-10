@@ -210,6 +210,12 @@ static void ncp_joining_DBG_show_start_stop(zb_uint8_t trigg_id);
 
 zb_uint8_t volatile ncp_DBG_show_sch_done = 0;
 
+#if !defined(NRF54L_SERIES)
+extern uint32_t nrf_802154_hp_timer_current_time_get(void);
+#else
+static inline uint32_t nrf_802154_hp_timer_current_time_get(void) { return 0; }
+#endif
+
 static void ncp_DBG_show_sched(void)     
 {
     if (ncp_DBG_show_sch_done == 0)
@@ -268,15 +274,15 @@ static void ncp_joining_DBG_permit_joing_sch_pshow(const struct ncp_DBG_event_s 
 
 static void ncp_joining_DBG_cmd_started_pshow(const struct ncp_DBG_event_s * e, zb_uint16_t ev_num)
 {
-    zb_uint32_t v32a, v32b, idx;
+    zb_uint32_t v32a, v32b, rx_tm;
     v32a = (e->pz[0]);
     v32b = (e->pz[1]);
-    LOG_ERR("ncp_DBG ev[%d] started tsn %d call_id %d", ev_num, v32a, v32b);
+    rx_tm = (e->pz[5]);
+    LOG_ERR("ncp_DBG ev[%d] started tsn %d call_id %d rxtm %d", ev_num, v32a, v32b, rx_tm);
 
     v32a = (e->pz[2]);
     v32b = (e->pz[3]);
-    idx = (e->pz[5]);
-    LOG_ERR("ncp_DBG ev[%d] req_addr pib %d req %d idx %d", ev_num, v32a, v32b, idx);
+    LOG_ERR("ncp_DBG ev[%d] req_addr pib %d req %d", ev_num, v32a, v32b);
 }
 
 static void ncp_joining_DBG_show_start_stop(zb_uint8_t trigg_id)
@@ -446,19 +452,17 @@ static void ncp_joining_DBG_send_later_pshow(const struct ncp_DBG_event_s * e, z
 zb_uint8_t ncp_joining_DBG_started(zb_uint32_t hdr_tsn, zb_uint32_t hdr_call_id)
 {
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
-    zb_uint8_t idx;
 
     e->st = 2;
     e->pz[0] = hdr_tsn;
     e->pz[1] = hdr_call_id;
     e->pz[2] = 0xFFFFFFFFuL;
     e->pz[3] = 0xFFFFFFFFuL;
-    idx = (e - &(ncp_DBG_events[0])); // . / sizeof(*e);
-    e->pz[5] = idx;
+    e->pz[5] = nrf_802154_hp_timer_current_time_get();
     e->pr_cb = ncp_joining_DBG_cmd_started_pshow;
     e->st = 1;
 
-    return idx;
+    return (e - &(ncp_DBG_events[0])); // . / sizeof(*e);;
 }
 
 void ncp_joining_DBG_short_ad(zb_uint8_t start_id, zb_uint32_t addr_pib, zb_uint32_t addr_req)
@@ -476,13 +480,11 @@ zb_uint32_t volatile ncp_DBG_cmd_stopped;  // init 0xFFFFFFFFuL
 zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
 {
     ncp_DBG_event_t volatile * e = (ncp_DBG_last ++);
-    zb_uint8_t idx;
 
     e->st = 2;
     e->pz[0] = op_id;
     e->pz[1] = 0xFFFFFFFFuL;
-    idx = (e - &(ncp_DBG_events[0])); // . / sizeof(*e);
-    e->pz[5] = idx;
+    e->pz[5] = nrf_802154_hp_timer_current_time_get();
     e->pr_cb = ncp_joining_DBG_cmd_stopped_pshow;
     e->st = 1;
 
@@ -493,7 +495,7 @@ zb_uint8_t ncp_joining_DBG_stopped(zb_uint8_t op_id)
 
     ncp_DBG_show_sched();
 
-    return idx;
+    return (e - &(ncp_DBG_events[0])); // . / sizeof(*e);
 }
 
 void ncp_joining_DBG_stop_result(zb_uint8_t stop_id, zb_uint32_t stop_tsn)
@@ -531,8 +533,8 @@ static void ncp_joining_DBG_cmd_stopped_pshow(const struct ncp_DBG_event_s * e, 
 {
    zb_uint32_t stop_id  = (e->pz[0]);
    zb_uint32_t stop_tsn = (e->pz[1]);
-   zb_uint32_t idx = (e->pz[5]);
-   LOG_INF("ncp_DBG ev[%d] stop_id %d tsn %d idx %d", ev_num, stop_id, stop_tsn, idx);
+   zb_uint32_t done_tm  = (e->pz[5]);
+   LOG_INF("ncp_DBG ev[%d] stop_id %d tsn %d done_time %d", ev_num, stop_id, stop_tsn, done_tm);
 }
 
 int main(void)
@@ -601,7 +603,7 @@ int main(void)
 	/* Setup ncp custom command handling */
 	ncp_vendor_specific_init();
 	
-	LOG_INF("ncp_DBG extra logs 24v enabled");
+	LOG_INF("ncp_DBG extra logs 25v enabled");
 
 	/* Start Zigbee default thread */
 	zigbee_enable();
