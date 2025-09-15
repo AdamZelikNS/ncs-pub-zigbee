@@ -298,6 +298,30 @@ void zb_init_configurable_mem(int clear);
  */
 ZB_ASSERT_TYPE_SIZE_NOT_GREATER(zb_bool_t, 1);
 
+void ncp_joining_DBG_req_cli_0c(zb_uint32_t pj_bufid, const void * pj_cb,  zb_bool_t is_joined);
+void ncp_joining_DBG_req_cli_1c(zb_uint8_t schedule_id, zb_uint32_t req_tsn);
+
+
+void ncp_joining_DBG_fill_resp_hdr(zb_uint8_t tsnv, zb_ret_t st, zb_uint_t body_siz);
+void ncp_joining_DBG_mode_nondef(zb_uint16_t ctx_mode, zb_uint16_t call_cat, zb_uint16_t lengt);
+void ncp_joining_DBG_illeg_req(zb_uint16_t pkt_typ, zb_uint16_t call_cat, zb_uint16_t lengt);
+void ncp_joining_DBG_send_pkt(const void *p_data, zb_uint16_t tx_lengt);
+void ncp_joining_DBG_send_later(zb_uint16_t lengt);
+
+
+void ncp_joining_DBG_started(zb_uint32_t hdr_tsn, zb_uint32_t hdr_call_id);
+void ncp_joining_DBG_short_ad(zb_uint8_t rq_tsn, zb_uint32_t addr_pib, zb_uint32_t addr_req);
+void ncp_joining_DBG_stopped(zb_uint8_t op_id, zb_uint16_t rq_tsn, zb_uint16_t buf_id);
+void ncp_joining_DBG_stop_result(zb_uint16_t rq_tsn, zb_uint32_t stop_tsn);
+
+void ncp_joining_DBG_register_request(zb_uint8_t tsnv, zb_uint8_t case_id, const char * info_txt);
+
+void ncp_joining_DBG_send_packet_failed(zb_uint16_t cId);
+
+void ncp_joining_DBG_pj_req_h2c(zb_uint16_t dest_short_addr, zb_uint32_t cbp, zb_uint16_t perm_dur);
+
+
+
 #endif /* ZB_MINIMAL_CONTEXT */
 
 #endif /* ZB_COMMON_H */
