@@ -5,10 +5,12 @@ manifest:
   remotes:
     - name: ncs
       url-base: https://github.com/nrfconnect
+    - name: gh_adze
+      url-base: https://github.com/AdamZelikNS
 
   projects:
     - name: nrf
-      remote: ncs
+      remote: gh_adze
       repo-path: sdk-nrf
-      revision: v2.9.0
+      revision: tst/radio_rx_end_rx_rdy_latency
       import: true
